@@ -176,6 +176,21 @@ export interface Translations {
   streakLabel: string;
   diffHard: string;
   diffEasy: string;
+  // ── Multiplication Practice ──────────────────────────────
+  multPractice: string;
+  multPracticeTitle: string;
+  multCurrentStreak: string;
+  multBestStreak: string;
+  multAccuracy: string;
+  multExit: string;
+  multQuestionPrompt: string;
+  multCorrect: string;
+  multWeakPointsTitle: string;
+  multWeakPointsSubtitle: string;
+  multWeakPointsEmpty: string;
+  multFactLabel: string;
+  multErrorRate: string;
+  multAttempts: string;
 }
 
 // ── English ───────────────────────────────────────────────────
@@ -328,6 +343,21 @@ export const en: Translations = {
   streakLabel: "streak",
   diffHard: "↑ hard",
   diffEasy: "↓ easy",
+  // ── Multiplication Practice ──────────────────────────────
+  multPractice: "⚡ Times Tables",
+  multPracticeTitle: "Multiplication Practice",
+  multCurrentStreak: "Current Streak",
+  multBestStreak: "Best Streak",
+  multAccuracy: "Accuracy",
+  multExit: "Exit",
+  multQuestionPrompt: "What is:",
+  multCorrect: "Correct! ✅",
+  multWeakPointsTitle: "⚡ Multiplication Weak Points",
+  multWeakPointsSubtitle: "Facts your child misses most often (min. 2 attempts)",
+  multWeakPointsEmpty: "No weak points yet — keep practising! 🌟",
+  multFactLabel: "Fact",
+  multErrorRate: "Error Rate",
+  multAttempts: "Attempts",
 };
 
 // ── Arabic ────────────────────────────────────────────────────
@@ -480,6 +510,21 @@ export const ar: Translations = {
   streakLabel: "متتالية",
   diffHard: "↑ صعب",
   diffEasy: "↓ سهل",
+  // ── Multiplication Practice ──────────────────────────────
+  multPractice: "⚡ جدول الضرب",
+  multPracticeTitle: "تدريب جدول الضرب",
+  multCurrentStreak: "التسلسل الحالي",
+  multBestStreak: "أعلى رقم قياسي",
+  multAccuracy: "الدقة",
+  multExit: "خروج",
+  multQuestionPrompt: "ما هو ناتج:",
+  multCorrect: "ممتاز! ✅",
+  multWeakPointsTitle: "⚡ نقاط ضعف جدول الضرب",
+  multWeakPointsSubtitle: "الحقائق التي يخطئ فيها طفلك أكثر (2 محاولات على الأقل)",
+  multWeakPointsEmpty: "لا توجد نقاط ضعف بعد — واصل التدريب! 🌟",
+  multFactLabel: "الحقيقة",
+  multErrorRate: "معدل الخطأ",
+  multAttempts: "المحاولات",
 };
 
 export const translations: Record<Language, Translations> = { en, ar };

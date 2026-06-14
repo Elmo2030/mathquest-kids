@@ -20,7 +20,9 @@ import VictoryScreen from "./pages/VictoryScreen";
 import EndlessScreen from "./pages/EndlessScreen";
 import TrophyRoomScreen from "./pages/TrophyRoomScreen";
 import LevelCompleteScreen from "./pages/LevelCompleteScreen";
+import MultPracticeScreen from "./pages/MultPracticeScreen";
 import { BadgeProvider } from "./contexts/BadgeContext";
+import { MultPracticeProvider, useMultPractice } from "./contexts/MultPracticeContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const pageVariants = {
@@ -31,6 +33,7 @@ const pageVariants = {
 
 function GameRouter() {
   const { screen } = useGame();
+  const { isOpen: isMultOpen } = useMultPractice();
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -51,6 +54,20 @@ function GameRouter() {
         {screen === "trophy"        && <TrophyRoomScreen />}
         {screen === "levelcomplete" && <LevelCompleteScreen />}
       </motion.div>
+      {/* Multiplication Practice overlay — sits above all screens */}
+      <AnimatePresence>
+        {isMultOpen && (
+          <motion.div
+            key="mult-practice"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.23, 1, 0.32, 1] as [number,number,number,number] } }}
+            exit={{ opacity: 0, y: 30, transition: { duration: 0.2 } }}
+            style={{ position: "fixed", inset: 0, zIndex: 50 }}
+          >
+            <MultPracticeScreen />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 }
@@ -62,10 +79,12 @@ export default function App() {
         <TooltipProvider>
           <LanguageProvider>
             <GameProvider>
+              <MultPracticeProvider>
               <BadgeProvider>
                 <Toaster />
                 <GameRouter />
               </BadgeProvider>
+              </MultPracticeProvider>
             </GameProvider>
           </LanguageProvider>
         </TooltipProvider>

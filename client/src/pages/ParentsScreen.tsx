@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame, type GradeZone } from "@/contexts/GameContext";
+import { useMultPractice } from "@/contexts/MultPracticeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LtrNum from "@/components/LtrNum";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -213,6 +214,70 @@ function ResetDialog({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// ── MultWeakPointsWidget ─────────────────────────────────────
+
+function MultWeakPointsWidget({ isRTL, displayFont, bodyFont }: { isRTL: boolean; displayFont: string; bodyFont: string }) {
+  const { t } = useLanguage();
+  const { getWeakFacts } = useMultPractice();
+
+  // Build sorted list of weak facts (error rate > 0, min 2 attempts)
+  const weakFacts = useMemo(() => {
+    return getWeakFacts(8).map((r) => ({
+      fact: r.factKey,
+      errors: r.errors,
+      attempts: r.attempts,
+      errorRate: r.attempts > 0 ? Math.round((r.errors / r.attempts) * 100) : 0,
+    }));
+  }, [getWeakFacts]);
+
+  return (
+    <motion.section variants={itemVariants} aria-labelledby="mult-weak-heading">
+      <h2 id="mult-weak-heading" className="mb-1 text-xl" style={{ fontFamily: displayFont, color: "oklch(0.18 0.04 270)" }}>
+        {t("multWeakPointsTitle")}
+      </h2>
+      <p className="mb-3" style={{ fontFamily: bodyFont, fontWeight: 700, fontSize: "0.82rem", color: "oklch(0.52 0.04 270)" }}>
+        {t("multWeakPointsSubtitle")}
+      </p>
+      <div className="rounded-2xl overflow-hidden" style={{ border: "2.5px solid oklch(0.18 0.04 270)", boxShadow: `${isRTL ? "-4px" : "4px"} 4px 0 oklch(0.18 0.04 270)`, background: "oklch(0.99 0.015 85)" }}>
+        {weakFacts.length === 0 ? (
+          <div className="py-6 text-center" style={{ fontFamily: bodyFont, fontWeight: 700, fontSize: "0.95rem", color: "oklch(0.52 0.04 270)" }}>
+            {t("multWeakPointsEmpty")}
+          </div>
+        ) : (
+          <div>
+            {/* Header row */}
+            <div className="grid grid-cols-3 px-4 py-2" style={{ background: "oklch(0.82 0.17 85)", borderBottom: "2px solid oklch(0.18 0.04 270)" }}>
+              <span style={{ fontFamily: displayFont, fontSize: "0.8rem", color: "oklch(0.18 0.04 270)" }}>{t("multFactLabel")}</span>
+              <span className="text-center" style={{ fontFamily: displayFont, fontSize: "0.8rem", color: "oklch(0.18 0.04 270)" }}>{t("multAttempts")}</span>
+              <span className="text-end" style={{ fontFamily: displayFont, fontSize: "0.8rem", color: "oklch(0.18 0.04 270)" }}>{t("multErrorRate")}</span>
+            </div>
+            {weakFacts.map((f, i) => (
+              <motion.div
+                key={f.fact}
+                className="grid grid-cols-3 items-center px-4 py-2.5"
+                style={{ borderBottom: i < weakFacts.length - 1 ? "1px solid oklch(0.18 0.04 270 / 0.1)" : "none" }}
+                initial={{ opacity: 0, x: isRTL ? 10 : -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.05, duration: 0.3 }}
+              >
+                <span style={{ fontFamily: displayFont, fontSize: "1rem", color: "oklch(0.18 0.04 270)" }}>
+                  <LtrNum>{f.fact}</LtrNum>
+                </span>
+                <span className="text-center" style={{ fontFamily: bodyFont, fontWeight: 700, fontSize: "0.9rem", color: "oklch(0.35 0.04 270)" }}>
+                  <LtrNum>{f.attempts}</LtrNum>
+                </span>
+                <span className="text-end" style={{ fontFamily: displayFont, fontSize: "1rem", color: f.errorRate >= 60 ? "oklch(0.62 0.22 25)" : "oklch(0.82 0.17 85)" }}>
+                  <LtrNum>{f.errorRate}%</LtrNum>
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.section>
   );
 }
 
@@ -536,7 +601,10 @@ export default function ParentsScreen() {
               </div>
             </motion.section>
 
-            {/* ── 7. Reset Progress ──────────────────────── */}
+            {/* ── 7. Multiplication Weak Points ─────────────────────── */}
+            <MultWeakPointsWidget isRTL={isRTL} displayFont={displayFont} bodyFont={bodyFont} />
+
+            {/* ── 8. Reset Progress ──────────────────────── */}
             <motion.section variants={itemVariants} aria-labelledby="reset-heading">
               <h2 id="reset-heading" className="mb-3 text-xl"
                 style={{ fontFamily: displayFont, color: "oklch(0.18 0.04 270)" }}>

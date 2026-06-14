@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
+import { useMultPractice } from "@/contexts/MultPracticeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MascotOwl from "@/components/MascotOwl";
 import FloatingDecorations from "@/components/FloatingDecorations";
@@ -34,6 +35,7 @@ const itemVariants = {
 
 export default function HomeScreen() {
   const { goToLevels, navigateTo, totalStarsEarned, goToTrophy } = useGame();
+  const { openPractice } = useMultPractice();
   const { t, isRTL } = useLanguage();
   const [showGate, setShowGate] = useState(false);
 
@@ -173,6 +175,25 @@ export default function HomeScreen() {
                 aria-label={t("trophyRoom")}
               >
                 {t("trophyRoom")}
+              </motion.button>
+
+              {/* Multiplication Practice — always unlocked, electric purple */}
+              <motion.button
+                className="btn-ink w-full sm:w-auto text-lg md:text-xl px-8 py-4"
+                style={{
+                  fontFamily: displayFont,
+                  background: "oklch(0.55 0.22 270)",
+                  border: "3px solid oklch(0.18 0.04 270)",
+                  boxShadow: `${isRTL ? "-4px" : "4px"} 4px 0 oklch(0.18 0.04 270)`,
+                  color: "oklch(0.98 0 0)",
+                }}
+                onClick={openPractice}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                aria-label={t("multPractice")}
+              >
+                ⚡ {t("multPractice")}
               </motion.button>
             </motion.div>
 
