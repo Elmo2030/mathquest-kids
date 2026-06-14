@@ -327,6 +327,12 @@ export default function GameScreen() {
   const [isAdvancing, setIsAdvancing] = useState(false);
   const answerStartRef = useRef<number>(Date.now());
 
+  // Always-fresh refs so setTimeout callbacks never capture stale closures
+  const nextQuestionRef = useRef(nextQuestion);
+  useEffect(() => { nextQuestionRef.current = nextQuestion; }, [nextQuestion]);
+  const roundRef = useRef(round);
+  useEffect(() => { roundRef.current = round; }, [round]);
+
   const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
   const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
 
@@ -390,7 +396,11 @@ export default function GameScreen() {
       setTimeout(() => {
         setMascotMood("idle");
         setIsAdvancing(true);
-        setTimeout(() => nextQuestion(), 200);
+        // Use ref so we always call the latest nextQuestion, never a stale closure.
+        // This is critical for the last question: by the time this fires, React has
+        // already re-rendered with round.isComplete = true, and nextQuestionRef.current
+        // points to the updated callback that will trigger the level-complete flow.
+        setTimeout(() => nextQuestionRef.current(), 200);
       }, 1600);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

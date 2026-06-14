@@ -23,6 +23,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
+import { usePersistFn } from "@/hooks/usePersistFn";
 import {
   generateAdaptiveQuestion,
   generateRound,
@@ -565,8 +566,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [round.questions, round.currentIndex]);
 
-  // Called after the feedback animation completes
-  const nextQuestion = useCallback(() => {
+  // Called after the feedback animation completes.
+  // usePersistFn (not useCallback) ensures the setTimeout in GameScreen always
+  // calls the latest version of this function with the current round state,
+  // eliminating the stale-closure bug on the last question.
+  const nextQuestion = usePersistFn(() => {
     if (round.isComplete) {
       // ── Persist round results ──────────────────────────────
 
@@ -682,7 +686,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     } else {
       dispatch({ type: "NEXT_QUESTION" });
     }
-  }, [round, selectedLevel, subLevelProgress]);
+  });
 
   // ── Level Complete flow ────────────────────────────────────
 
