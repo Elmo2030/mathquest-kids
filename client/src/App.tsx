@@ -10,6 +10,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { GameProvider, useGame } from "./contexts/GameContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import HomeScreen from "./pages/HomeScreen";
 import LevelSelectScreen from "./pages/LevelSelectScreen";
 import GameScreen from "./pages/GameScreen";
@@ -50,10 +51,12 @@ export default function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <GameProvider>
-            <Toaster />
-            <GameRouter />
-          </GameProvider>
+          <LanguageProvider>
+            <GameProvider>
+              <Toaster />
+              <GameRouter />
+            </GameProvider>
+          </LanguageProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

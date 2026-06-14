@@ -1,20 +1,19 @@
 /**
  * LevelSelectScreen — MathQuest Kids
  * Design: Sunny Storybook
- * ─────────────────────────────────────────────────────────────
- * Four grade zone cards (KG / G1 / G2 / G3).
- * Each card expands to show its sub-levels with pass progress.
- * Tapping a sub-level chip starts a focused round on that operation.
- * Tapping "Play All" starts a mixed round for the whole grade.
- * ─────────────────────────────────────────────────────────────
+ * i18n: Full EN/AR support with RTL layout switching.
+ * Numbers: All numeric values wrapped in LtrNum for RTL safety.
  */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame, type LevelInfo, type GradeZone } from "@/contexts/GameContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { PASS_THRESHOLD } from "@/lib/mathEngine";
 import FloatingDecorations from "@/components/FloatingDecorations";
 import MascotOwl from "@/components/MascotOwl";
+import LanguageToggle from "@/components/LanguageToggle";
+import LtrNum from "@/components/LtrNum";
 
 const LEVEL_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/level-bg-Am4tSjW7v3sFBcfAVC3Ehm.webp";
@@ -56,7 +55,6 @@ function StarRating({ stars, total }: { stars: number; total: number }) {
 
 function LevelCard({
   level,
-  index,
   expanded,
   onToggle,
 }: {
@@ -65,15 +63,24 @@ function LevelCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const {
-    selectLevel,
-    getSubLevelProgressForGrade,
-    isGradeMastered,
-  } = useGame();
+  const { selectLevel, getSubLevelProgressForGrade, isGradeMastered } = useGame();
+  const { t, isRTL } = useLanguage();
 
   const subLevels = getSubLevelProgressForGrade(level.id);
   const passedCount = subLevels.filter((s) => s.passed).length;
   const mastered = isGradeMastered(level.id);
+
+  const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
+  const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
+
+  // Translate grade label and subtitle from context
+  const gradeLabels: Record<GradeZone, { label: string; subtitle: string }> = {
+    KG: { label: t("gradeKG"), subtitle: t("gradeKGSub") },
+    G1: { label: t("grade1"), subtitle: t("grade1Sub") },
+    G2: { label: t("grade2"), subtitle: t("grade2Sub") },
+    G3: { label: t("grade3"), subtitle: t("grade3Sub") },
+  };
+  const { label, subtitle } = gradeLabels[level.id];
 
   return (
     <motion.div
@@ -82,66 +89,59 @@ function LevelCard({
       style={{
         border: "3px solid oklch(0.18 0.04 270)",
         boxShadow: level.unlocked
-          ? "6px 6px 0px oklch(0.18 0.04 270)"
-          : "3px 3px 0px oklch(0.18 0.04 270)",
+          ? isRTL ? "-6px 6px 0px oklch(0.18 0.04 270)" : "6px 6px 0px oklch(0.18 0.04 270)"
+          : isRTL ? "-3px 3px 0px oklch(0.18 0.04 270)" : "3px 3px 0px oklch(0.18 0.04 270)",
         opacity: level.unlocked ? 1 : 0.75,
       }}
-      whileHover={level.unlocked ? { y: -3, boxShadow: "8px 10px 0px oklch(0.18 0.04 270)" } : {}}
+      whileHover={level.unlocked ? { y: -3 } : {}}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {/* ── Card header (always visible) ──────────────────── */}
+      {/* Card header */}
       <button
-        className="w-full text-left"
+        className="w-full text-start"
         style={{ background: level.bgColor }}
         onClick={onToggle}
         disabled={!level.unlocked}
         aria-expanded={expanded}
-        aria-label={`${level.label} — ${level.unlocked ? (expanded ? "collapse" : "expand") : "locked"}`}
+        aria-label={`${label} — ${level.unlocked ? (expanded ? "collapse" : "expand") : "locked"}`}
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-2">
-          {/* Left: emoji + title */}
           <div className="flex items-center gap-3">
             <span className="text-4xl md:text-5xl" aria-hidden="true">{level.emoji}</span>
             <div>
               <h3
                 className="text-xl md:text-2xl leading-tight"
                 style={{
-                  fontFamily: "'Fredoka One', sans-serif",
+                  fontFamily: displayFont,
                   color: level.textColor,
                   textShadow: level.unlocked ? "1px 2px 0 oklch(0.18 0.04 270 / 0.2)" : "none",
                 }}
               >
-                {level.label}
+                {label}
               </h3>
               <p
                 className="text-sm md:text-base mt-0.5"
                 style={{
-                  fontFamily: "'Nunito', sans-serif",
+                  fontFamily: bodyFont,
                   fontWeight: 700,
                   color: level.textColor === "white"
                     ? "oklch(0.95 0 0 / 0.85)"
                     : "oklch(0.28 0.04 270)",
                 }}
               >
-                {level.subtitle}
+                {subtitle}
               </p>
             </div>
           </div>
 
-          {/* Right: stars / lock / chevron */}
           <div className="flex flex-col items-end gap-1 shrink-0">
             {level.unlocked ? (
               <>
                 <StarRating stars={level.stars} total={level.totalStars} />
-                <span
-                  style={{
-                    fontFamily: "'Fredoka One', sans-serif",
-                    fontSize: "0.72rem",
-                    color: level.textColor,
-                    opacity: 0.85,
-                  }}
-                >
-                  {mastered ? "✅ Mastered!" : `${passedCount}/${subLevels.length} ops`}
+                <span style={{ fontFamily: displayFont, fontSize: "0.72rem", color: level.textColor, opacity: 0.85 }}>
+                  {mastered ? t("levelMastered") : (
+                    <><LtrNum>{passedCount}</LtrNum>/<LtrNum>{subLevels.length}</LtrNum> ops</>
+                  )}
                 </span>
                 <motion.span
                   animate={{ rotate: expanded ? 180 : 0 }}
@@ -153,12 +153,12 @@ function LevelCard({
                 </motion.span>
               </>
             ) : (
-              <span className="text-3xl" aria-label="Locked">🔒</span>
+              <span className="text-3xl" aria-label={t("locked")}>🔒</span>
             )}
           </div>
         </div>
 
-        {/* Sub-level mini dot bar (always visible when unlocked) */}
+        {/* Sub-level dot bar */}
         {level.unlocked && subLevels.length > 0 && (
           <div className="flex gap-1 px-5 pb-4 pt-1">
             {subLevels.map((sp) => (
@@ -171,14 +171,14 @@ function LevelCard({
                     ? "oklch(0.18 0.04 270)"
                     : "oklch(0.18 0.04 270 / 0.25)",
                 }}
-                title={`${sp.label}: ${sp.passed ? "Passed" : `${sp.correctCount}/${PASS_THRESHOLD}`}`}
+                title={`${sp.label}: ${sp.passed ? t("passed") : `${sp.correctCount}/${PASS_THRESHOLD}`}`}
               />
             ))}
           </div>
         )}
       </button>
 
-      {/* ── Expanded sub-level panel ───────────────────────── */}
+      {/* Expanded sub-level panel */}
       <AnimatePresence>
         {expanded && level.unlocked && (
           <motion.div
@@ -193,31 +193,27 @@ function LevelCard({
             }}
           >
             <div className="px-4 py-4 flex flex-col gap-3">
-              {/* Play All button */}
+              {/* Play All */}
               <motion.button
                 className="btn-ink w-full py-3 text-base"
                 style={{
                   background: level.bgColor,
                   color: level.textColor,
-                  fontFamily: "'Fredoka One', sans-serif",
+                  fontFamily: displayFont,
                 }}
                 onClick={() => selectLevel(level.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                aria-label={`Play all ${level.label} operations`}
+                aria-label={`Play all ${label} operations`}
               >
-                {level.emoji} Play All {level.label} Operations
+                {level.emoji} {t("startLevel")} {label}
               </motion.button>
 
               <p
                 className="text-center"
-                style={{
-                  fontFamily: "'Fredoka One', sans-serif",
-                  fontSize: "0.78rem",
-                  color: "oklch(0.52 0.04 270)",
-                }}
+                style={{ fontFamily: displayFont, fontSize: "0.78rem", color: "oklch(0.52 0.04 270)" }}
               >
-                — or practise one operation —
+                — {t("practiceThis").replace("→", "").replace("←", "").trim()} —
               </p>
 
               {/* Sub-level chips */}
@@ -229,46 +225,30 @@ function LevelCard({
                   return (
                     <motion.button
                       key={sp.subLevelId}
-                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-left w-full"
+                      className="flex items-center gap-3 px-4 py-3 rounded-2xl text-start w-full"
                       style={{
-                        background: sp.passed
-                          ? "oklch(0.92 0.06 145)"
-                          : "oklch(0.97 0.015 85)",
+                        background: sp.passed ? "oklch(0.92 0.06 145)" : "oklch(0.97 0.015 85)",
                         border: `2.5px solid ${sp.passed ? "oklch(0.65 0.2 145)" : "oklch(0.18 0.04 270)"}`,
-                        boxShadow: `3px 3px 0 ${sp.passed ? "oklch(0.48 0.2 145)" : "oklch(0.18 0.04 270)"}`,
+                        boxShadow: `${isRTL ? "-3px" : "3px"} 3px 0 ${sp.passed ? "oklch(0.48 0.2 145)" : "oklch(0.18 0.04 270)"}`,
                       }}
                       onClick={() => selectLevel(level.id, sp.subLevelId)}
                       whileHover={{ scale: 1.02, y: -1 }}
                       whileTap={{ scale: 0.97 }}
-                      aria-label={`Practise ${sp.label} — ${sp.passed ? "passed" : `${sp.correctCount} of ${PASS_THRESHOLD} correct`}`}
                     >
                       <span className="text-2xl shrink-0" aria-hidden="true">{sp.emoji}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <span
-                            style={{
-                              fontFamily: "'Fredoka One', sans-serif",
-                              fontSize: "0.95rem",
-                              color: "oklch(0.18 0.04 270)",
-                            }}
-                          >
+                          <span style={{ fontFamily: displayFont, fontSize: "0.95rem", color: "oklch(0.18 0.04 270)" }}>
                             {sp.label}
                           </span>
                           {sp.passed ? (
-                            <span className="text-sm" aria-hidden="true">✅ Passed!</span>
+                            <span className="text-sm" aria-hidden="true">✅ {t("passed")}</span>
                           ) : (
-                            <span
-                              style={{
-                                fontFamily: "'Fredoka One', sans-serif",
-                                fontSize: "0.75rem",
-                                color: "oklch(0.52 0.04 270)",
-                              }}
-                            >
-                              {sp.correctCount}/{PASS_THRESHOLD} ✓
+                            <span style={{ fontFamily: displayFont, fontSize: "0.75rem", color: "oklch(0.52 0.04 270)" }}>
+                              <LtrNum>{sp.correctCount}</LtrNum>/<LtrNum>{PASS_THRESHOLD}</LtrNum> ✓
                             </span>
                           )}
                         </div>
-                        {/* Mini progress bar */}
                         <div
                           className="rounded-full overflow-hidden"
                           style={{
@@ -304,21 +284,15 @@ function LevelCard({
       {!level.unlocked && (
         <div
           className="absolute inset-0 rounded-3xl flex items-end justify-center pb-4"
-          style={{
-            background: "oklch(0.18 0.04 270 / 0.18)",
-            backdropFilter: "blur(1.5px)",
-          }}
+          style={{ background: "oklch(0.18 0.04 270 / 0.18)", backdropFilter: "blur(1.5px)" }}
           aria-hidden="true"
         >
           <div
             className="flex flex-col items-center gap-1 px-4 py-2 rounded-2xl"
-            style={{
-              background: "oklch(0.99 0.015 85 / 0.92)",
-              border: "2px solid oklch(0.18 0.04 270)",
-            }}
+            style={{ background: "oklch(0.99 0.015 85 / 0.92)", border: "2px solid oklch(0.18 0.04 270)" }}
           >
-            <span className="text-xs" style={{ fontFamily: "'Fredoka One', sans-serif", color: "oklch(0.18 0.04 270)" }}>
-              Earn ⭐ in the previous level!
+            <span className="text-xs" style={{ fontFamily: displayFont, color: "oklch(0.18 0.04 270)" }}>
+              {t("locked")} — {isRTL ? "احصل على ⭐ في المستوى السابق!" : "Earn ⭐ in the previous level!"}
             </span>
           </div>
         </div>
@@ -329,8 +303,12 @@ function LevelCard({
 
 export default function LevelSelectScreen() {
   const { goHome, levels, totalStarsEarned } = useGame();
+  const { t, isRTL } = useLanguage();
   const totalPossible = levels.reduce((s, l) => s + l.totalStars, 0);
   const [expandedGrade, setExpandedGrade] = useState<GradeZone | null>(null);
+
+  const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
+  const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
 
   const handleToggle = (id: GradeZone, unlocked: boolean) => {
     if (!unlocked) return;
@@ -347,12 +325,7 @@ export default function LevelSelectScreen() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      {/* Overlay */}
-      <div
-        className="absolute inset-0"
-        style={{ background: "oklch(0.985 0.025 90 / 0.45)" }}
-      />
-
+      <div className="absolute inset-0" style={{ background: "oklch(0.985 0.025 90 / 0.45)" }} />
       <FloatingDecorations density="low" />
 
       {/* Header */}
@@ -365,26 +338,26 @@ export default function LevelSelectScreen() {
         <button
           className="btn-ink btn-ink-white text-base px-4 py-2.5"
           onClick={goHome}
-          aria-label="Go back to home"
+          style={{ fontFamily: displayFont }}
+          aria-label={t("backHome")}
         >
-          ← Back
+          {isRTL ? "الرئيسية →" : "← Back"}
         </button>
 
         <div className="flex items-center gap-2">
           <img src={LOGO_STAR} alt="" className="w-9 h-9" aria-hidden="true" />
           <span
             className="text-xl md:text-2xl"
-            style={{
-              fontFamily: "'Fredoka One', sans-serif",
-              color: "oklch(0.18 0.04 270)",
-              textShadow: "2px 2px 0 oklch(0.82 0.17 85)",
-            }}
+            style={{ fontFamily: displayFont, color: "oklch(0.18 0.04 270)", textShadow: "2px 2px 0 oklch(0.82 0.17 85)" }}
           >
-            Pick Your Quest!
+            {t("chooseLevelTitle")}
           </span>
         </div>
 
-        <MascotOwl mood="idle" size="sm" />
+        <div className="flex items-center gap-2">
+          <LanguageToggle variant="light" />
+          <MascotOwl mood="idle" size="sm" />
+        </div>
       </motion.header>
 
       {/* Page title */}
@@ -396,23 +369,15 @@ export default function LevelSelectScreen() {
       >
         <h2
           className="text-3xl md:text-4xl"
-          style={{
-            fontFamily: "'Fredoka One', sans-serif",
-            color: "oklch(0.18 0.04 270)",
-            textShadow: "2px 3px 0 oklch(0.82 0.17 85)",
-          }}
+          style={{ fontFamily: displayFont, color: "oklch(0.18 0.04 270)", textShadow: "2px 3px 0 oklch(0.82 0.17 85)" }}
         >
-          Choose Your Grade Zone
+          {t("chooseLevelTitle")}
         </h2>
         <p
           className="text-base md:text-lg mt-1"
-          style={{
-            fontFamily: "'Nunito', sans-serif",
-            fontWeight: 700,
-            color: "oklch(0.28 0.04 270)",
-          }}
+          style={{ fontFamily: bodyFont, fontWeight: 700, color: "oklch(0.28 0.04 270)" }}
         >
-          Tap a card to see all operations 🗺️
+          {t("chooseLevelSubtitle")}
         </p>
       </motion.div>
 
@@ -447,37 +412,21 @@ export default function LevelSelectScreen() {
             style={{
               background: "oklch(0.99 0.015 85 / 0.88)",
               border: "2.5px solid oklch(0.18 0.04 270)",
-              boxShadow: "3px 3px 0 oklch(0.18 0.04 270)",
+              boxShadow: `${isRTL ? "-3px" : "3px"} 3px 0 oklch(0.18 0.04 270)`,
             }}
           >
-            <span
-              style={{
-                fontFamily: "'Fredoka One', sans-serif",
-                fontSize: "1rem",
-                color: "oklch(0.18 0.04 270)",
-              }}
-            >
-              Total Progress
+            <span style={{ fontFamily: displayFont, fontSize: "1rem", color: "oklch(0.18 0.04 270)" }}>
+              {isRTL ? "إجمالي التقدّم" : "Total Progress"}
             </span>
             <div className="flex items-center gap-3 flex-1 mx-4">
               <div className="progress-track flex-1">
                 <div
                   className="progress-fill"
-                  style={{
-                    width: `${Math.round((totalStarsEarned / totalPossible) * 100)}%`,
-                  }}
+                  style={{ width: `${Math.round((totalStarsEarned / totalPossible) * 100)}%` }}
                 />
               </div>
-              <span
-                style={{
-                  fontFamily: "'Fredoka One', sans-serif",
-                  fontSize: "0.95rem",
-                  color: "oklch(0.18 0.04 270)",
-                  minWidth: "4rem",
-                  textAlign: "right",
-                }}
-              >
-                {totalStarsEarned} / {totalPossible} ⭐
+              <span style={{ fontFamily: displayFont, fontSize: "0.95rem", color: "oklch(0.18 0.04 270)", minWidth: "4rem", textAlign: isRTL ? "left" : "right" }}>
+                <LtrNum>{totalStarsEarned}</LtrNum> / <LtrNum>{totalPossible}</LtrNum> ⭐
               </span>
             </div>
           </div>

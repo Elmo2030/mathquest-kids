@@ -385,3 +385,73 @@
     transition: none !important;
   }
 }
+
+/* ============================================================
+   RTL & Arabic Language Support
+   ============================================================
+   When dir="rtl" is set on <html>, Tailwind's RTL variants
+   (rtl:*) and CSS logical properties flip the layout.
+
+   CRITICAL: .ltr-num enforces LTR isolation on math equations
+   and numbers so Arabic context never reverses operator order.
+   ============================================================ */
+
+/* Force LTR isolation for all math content */
+.ltr-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Arabic body font override (applied via JS on lang switch) */
+:root {
+  --font-body: 'Nunito', sans-serif;
+  --font-display: 'Fredoka One', sans-serif;
+}
+
+/* When Arabic is active, use Tajawal for all text */
+[dir="rtl"] body,
+[dir="rtl"] .font-body {
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Answer buttons in RTL: keep text centered, math content LTR */
+[dir="rtl"] .answer-btn {
+  font-family: 'Tajawal', sans-serif;
+}
+
+/* Ink buttons in RTL: flip the box-shadow direction */
+[dir="rtl"] .btn-ink {
+  box-shadow: -4px 4px 0px oklch(0.18 0.04 270);
+}
+
+[dir="rtl"] .btn-ink:active:not(:disabled) {
+  transform: translate(-3px, 3px);
+  box-shadow: -1px 1px 0px oklch(0.18 0.04 270);
+}
+
+[dir="rtl"] .card-ink {
+  box-shadow: -6px 6px 0px oklch(0.18 0.04 270);
+}
+
+/* Progress bar fills from right in RTL */
+[dir="rtl"] .progress-fill {
+  background: linear-gradient(270deg, oklch(0.58 0.19 250), oklch(0.65 0.2 145));
+}
+
+/* Ensure math equation containers are always LTR */
+.math-equation {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Arabic display font for headings when RTL */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3 {
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 800;
+}
