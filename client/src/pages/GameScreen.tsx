@@ -14,13 +14,14 @@
  * ─────────────────────────────────────────────────────────────
  */
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import MascotOwl from "@/components/MascotOwl";
 import FloatingDecorations from "@/components/FloatingDecorations";
 import type { MoodType } from "@/components/MascotOwl";
 import type { Question, AnswerChoice } from "@/lib/mathEngine";
+import { PASS_THRESHOLD } from "@/lib/mathEngine";
 
 const LOGO_STAR =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/logo-star-VXHLUR84pLpFzMGbXzZvfX.webp";
@@ -210,13 +211,25 @@ function CountingVisual({ question }: { question: Question }) {
     );
   }
 
-  // G1 arithmetic visual: show the equation
+  // Arithmetic visual: show the equation for all operation types
+  const isAddition = question.type === "addition_easy" || question.type === "addition_hard";
+  const isSubtraction = question.type === "subtraction_easy" || question.type === "subtraction_hard";
+  const isMultiplication = question.type === "multiplication_basic" || question.type === "multiplication_full";
+  const isDivision = question.type === "division";
+
   if (
-    (question.type === "addition" || question.type === "subtraction") &&
+    (isAddition || isSubtraction || isMultiplication || isDivision) &&
     question.operandA !== undefined &&
     question.operandB !== undefined
   ) {
-    const op = question.type === "addition" ? "+" : "−";
+    const op = isAddition ? "+" : isSubtraction ? "−" : isMultiplication ? "×" : "÷";
+    const opColor = isAddition
+      ? "oklch(0.58 0.19 250)"
+      : isSubtraction
+      ? "oklch(0.62 0.22 25)"
+      : isMultiplication
+      ? "oklch(0.65 0.2 145)"
+      : "oklch(0.72 0.18 310)";
     return (
       <div className="flex items-center justify-center gap-3 flex-wrap">
         <span
@@ -232,10 +245,7 @@ function CountingVisual({ question }: { question: Question }) {
           style={{
             fontFamily: "'Fredoka One', sans-serif",
             fontSize: "2.4rem",
-            color:
-              question.type === "addition"
-                ? "oklch(0.58 0.19 250)"
-                : "oklch(0.62 0.22 25)",
+            color: opColor,
           }}
         >
           {op}
@@ -258,6 +268,55 @@ function CountingVisual({ question }: { question: Question }) {
         >
           = ?
         </span>
+      </div>
+    );
+  }
+
+  // Fraction visual: SVG pie chart
+  if (question.type === "fraction" && question.fractionVisual) {
+    const { numerator, denominator } = question.fractionVisual;
+    const sliceAngle = (2 * Math.PI) / denominator;
+    const cx = 60, cy = 60, r = 50;
+    const slices: React.ReactElement[] = [];
+    for (let i = 0; i < denominator; i++) {
+      const startAngle = i * sliceAngle - Math.PI / 2;
+      const endAngle = startAngle + sliceAngle;
+      const x1 = cx + r * Math.cos(startAngle);
+      const y1 = cy + r * Math.sin(startAngle);
+      const x2 = cx + r * Math.cos(endAngle);
+      const y2 = cy + r * Math.sin(endAngle);
+      const largeArc = sliceAngle > Math.PI ? 1 : 0;
+      const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+      const isShaded = i < numerator;
+      slices.push(
+        <motion.path
+          key={i}
+          d={d}
+          fill={isShaded ? "oklch(0.62 0.22 25)" : "oklch(0.94 0.02 90)"}
+          stroke="oklch(0.18 0.04 270)"
+          strokeWidth="2"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: i * 0.08, type: "spring", stiffness: 300, damping: 20 }}
+        />
+      );
+    }
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <svg width="120" height="120" viewBox="0 0 120 120" aria-label={`Pie chart showing ${question.fractionVisual.label}`}>
+          {slices}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="oklch(0.18 0.04 270)" strokeWidth="2.5" />
+        </svg>
+        <p
+          style={{
+            fontFamily: "'Nunito', sans-serif",
+            fontWeight: 700,
+            fontSize: "0.8rem",
+            color: "oklch(0.52 0.04 270)",
+          }}
+        >
+          The red slice is shaded 🎨
+        </p>
       </div>
     );
   }
@@ -347,6 +406,8 @@ export default function GameScreen() {
     currentQuestion,
     answerQuestion,
     nextQuestion,
+    activeSubLevelId,
+    subLevelProgress,
   } = useGame();
 
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
@@ -458,8 +519,8 @@ export default function GameScreen() {
           <HeartLives lives={round.lives} />
         </div>
 
-        {/* Row 2: Progress bar */}
-        <div className="flex items-center gap-3">
+        {/* Row 2: Question progress bar */}
+        <div className="flex items-center gap-3 mb-1">
           <img src={LOGO_STAR} alt="" className="w-6 h-6 shrink-0" aria-hidden="true" />
           <QuestionProgress current={questionNumber} total={totalQuestions} />
           <span
@@ -473,6 +534,56 @@ export default function GameScreen() {
             Q {questionNumber}/{totalQuestions}
           </span>
         </div>
+
+        {/* Row 3: Sub-level progression bar */}
+        {(() => {
+          const currentSubId = currentQuestion?.subLevelId ?? activeSubLevelId;
+          const sp = subLevelProgress.find((s) => s.subLevelId === currentSubId);
+          if (!sp) return null;
+          const pct = Math.min(100, Math.round((sp.correctCount / PASS_THRESHOLD) * 100));
+          return (
+            <div className="flex items-center gap-2">
+              <span
+                style={{
+                  fontFamily: "'Fredoka One', sans-serif",
+                  fontSize: "0.78rem",
+                  color: "oklch(0.35 0.04 270)",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {sp.emoji} {sp.label}
+              </span>
+              <div className="progress-track flex-1" style={{ height: "0.7rem" }}>
+                <motion.div
+                  className="progress-fill"
+                  style={{
+                    height: "100%",
+                    background: sp.passed
+                      ? "oklch(0.65 0.2 145)"
+                      : "linear-gradient(90deg, oklch(0.82 0.17 85), oklch(0.65 0.2 145))",
+                  }}
+                  initial={{ width: 0 }}
+                  animate={{ width: sp.passed ? "100%" : `${pct}%` }}
+                  transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] as [number, number, number, number] }}
+                />
+              </div>
+              {sp.passed ? (
+                <span className="text-sm" aria-label="Sub-level passed">✅</span>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: "'Fredoka One', sans-serif",
+                    fontSize: "0.75rem",
+                    color: "oklch(0.52 0.04 270)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {sp.correctCount}/{PASS_THRESHOLD}
+                </span>
+              )}
+            </div>
+          );
+        })()}
       </motion.header>
 
       {/* ── MAIN CONTENT ────────────────────────────────── */}
