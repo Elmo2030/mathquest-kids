@@ -79,7 +79,7 @@ export const INITIAL_LEVELS: LevelInfo[] = [
     shadowColor: "oklch(0.42 0.19 250)",
     textColor: "white",
     emoji: "🚀",
-    unlocked: true,
+    unlocked: false,
     stars: 0,
     totalStars: 3,
     gamesPlayed: 0,
@@ -405,9 +405,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [selectedLevel, setSelectedLevel] = useState<GradeZone | null>(null);
   const [activeSubLevelId, setActiveSubLevelId] = useState<string | null>(null);
 
-  const [levels, setLevels] = useState<LevelInfo[]>(() =>
-    loadFromStorage(LS_LEVELS_KEY, INITIAL_LEVELS)
-  );
+  const [levels, setLevels] = useState<LevelInfo[]>(() => {
+    const stored = loadFromStorage<LevelInfo[]>(LS_LEVELS_KEY, INITIAL_LEVELS);
+    // Migration v2→v3: G1 was incorrectly set to unlocked:true in INITIAL_LEVELS.
+    // If KG has 0 stars and 0 gamesPlayed, G1 should NOT be unlocked yet.
+    // We fix this silently so existing users who haven't played yet get the correct state.
+    const kgEntry = stored.find((l) => l.id === "KG");
+    const g1Entry = stored.find((l) => l.id === "G1");
+    if (kgEntry && g1Entry && kgEntry.stars === 0 && kgEntry.gamesPlayed === 0 && g1Entry.unlocked) {
+      return stored.map((l) => l.id === "G1" ? { ...l, unlocked: false } : l);
+    }
+    return stored;
+  });
 
   const [subLevelProgress, setSubLevelProgress] = useState<SubLevelProgress[]>(
     () => {
@@ -611,30 +620,42 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         totalCorrectAnswers: prev.totalCorrectAnswers + roundCorrect,
       }));
 
-      // 4. Update level stars and games played
-      setLevels((prev) =>
-        prev.map((l) => {
+      // 4+5. Update level stars, games played, AND unlock next grade — all in one atomic
+      //       setLevels call to avoid React batching issues with stale state.
+      //       We first compute justUnlockedGrade synchronously from the current `levels`
+      //       snapshot (captured in the closure) so the navigation decision is reliable.
+      // (step 4 merged into step 5 below)
+
+      // 5. Determine which grade (if any) gets unlocked, and update levels atomically.
+      //    We compute justUnlockedGrade synchronously from the current `levels` snapshot
+      //    (captured in the closure) BEFORE calling setLevels, so the navigation
+      //    decision is not affected by the async nature of React state updates.
+      const currentIdx = levels.findIndex((l) => l.id === selectedLevel);
+      const justUnlockedGrade: GradeZone | null =
+        round.starsEarned >= 1 &&
+        currentIdx >= 0 &&
+        currentIdx < levels.length - 1 &&
+        !levels[currentIdx + 1].unlocked
+          ? levels[currentIdx + 1].id
+          : null;
+
+      setLevels((prev) => {
+        // a) update stars & games played for the current grade
+        const withStars = prev.map((l) => {
           if (l.id !== selectedLevel) return l;
           const newStars = Math.max(l.stars, round.starsEarned);
           return { ...l, stars: newStars, gamesPlayed: l.gamesPlayed + 1 };
-        })
-      );
-
-      // 5. Unlock next grade if earned ≥1 star and track which grade was just unlocked
-      let justUnlockedGrade: GradeZone | null = null;
-      if (round.starsEarned >= 1) {
-        setLevels((prev) => {
-          const idx = prev.findIndex((l) => l.id === selectedLevel);
-          if (idx < 0 || idx >= prev.length - 1) return prev;
-          const nextLevel = prev[idx + 1];
-          if (!nextLevel.unlocked) {
-            justUnlockedGrade = nextLevel.id;
-          }
-          return prev.map((l, i) =>
-            i === idx + 1 ? { ...l, unlocked: true } : l
-          );
         });
-      }
+
+        // b) unlock next grade if ≥1 star earned
+        if (justUnlockedGrade) {
+          const idx = withStars.findIndex((l) => l.id === selectedLevel);
+          if (idx >= 0 && idx < withStars.length - 1) {
+            return withStars.map((l, i) => (i === idx + 1 ? { ...l, unlocked: true } : l));
+          }
+        }
+        return withStars;
+      });
 
       // Check if all grades are now mastered → Victory Screen
       const updatedSubLevels = subLevelProgress.map((sp) => {
