@@ -1,42 +1,59 @@
+/**
+ * App.tsx — MathQuest Kids
+ * Design: Sunny Storybook
+ * Routing: Context-driven screen navigation (no URL routing needed for a game).
+ * Screens: Home → LevelSelect → Game | Parents
+ */
+
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
+import { AnimatePresence, motion } from "framer-motion";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import { GameProvider, useGame } from "./contexts/GameContext";
+import HomeScreen from "./pages/HomeScreen";
+import LevelSelectScreen from "./pages/LevelSelectScreen";
+import GameScreen from "./pages/GameScreen";
+import ParentsScreen from "./pages/ParentsScreen";
+import ErrorBoundary from "./components/ErrorBoundary";
 
+const pageVariants = {
+  initial: { opacity: 0, x: 40 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] as [number,number,number,number] } },
+  exit:    { opacity: 0, x: -30, transition: { duration: 0.18, ease: [0.77, 0, 0.175, 1] as [number,number,number,number] } },
+};
 
-function Router() {
+function GameRouter() {
+  const { screen } = useGame();
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={screen}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        style={{ minHeight: "100vh" }}
+      >
+        {screen === "home"    && <HomeScreen />}
+        {screen === "levels"  && <LevelSelectScreen />}
+        {screen === "game"    && <GameScreen />}
+        {screen === "parents" && <ParentsScreen />}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
-
-function App() {
+export default function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
-          <Router />
+          <GameProvider>
+            <Toaster />
+            <GameRouter />
+          </GameProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
 }
-
-export default App;

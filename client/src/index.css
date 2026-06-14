@@ -1,3 +1,11 @@
+/* ============================================================
+   MathQuest Kids — Global Design System
+   Theme: Sunny Storybook (Neo-Naive / Children's Picture Book)
+   Colors: Warm Cream bg, Sky Blue primary, Sunshine Yellow accent,
+           Grass Green success, Coral Red error, Deep Ink outlines
+   Fonts: Fredoka One (display) + Nunito (body)
+   ============================================================ */
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -7,7 +15,7 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 8px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -27,131 +35,115 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 :root {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-600);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --radius: 0.65rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.235 0.015 65);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.235 0.015 65);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.235 0.015 65);
-  --secondary: oklch(0.98 0.001 286.375);
-  --secondary-foreground: oklch(0.4 0.015 65);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.141 0.005 285.823);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.623 0.214 259.815);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.235 0.015 65);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
-}
+  /* Radius — chunky rounded corners for the storybook feel */
+  --radius: 1.25rem;
 
-.dark {
-  --primary: var(--color-blue-700);
-  --primary-foreground: var(--color-blue-50);
-  --sidebar-primary: var(--color-blue-500);
-  --sidebar-primary-foreground: var(--color-blue-50);
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.85 0.005 65);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.85 0.005 65);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.85 0.005 65);
-  --secondary: oklch(0.24 0.006 286.033);
-  --secondary-foreground: oklch(0.7 0.005 65);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground:  oklch(0.92 0.005 65);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.488 0.243 264.376);
-  --chart-1: var(--color-blue-300);
-  --chart-2: var(--color-blue-500);
-  --chart-3: var(--color-blue-600);
-  --chart-4: var(--color-blue-700);
-  --chart-5: var(--color-blue-800);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.85 0.005 65);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground:  oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.488 0.243 264.376);
+  /* Background: warm cream paper */
+  --background: oklch(0.985 0.025 90);
+  --foreground: oklch(0.18 0.04 270);
+
+  /* Cards: slightly warmer white */
+  --card: oklch(0.99 0.015 85);
+  --card-foreground: oklch(0.18 0.04 270);
+
+  /* Popover */
+  --popover: oklch(0.99 0.015 85);
+  --popover-foreground: oklch(0.18 0.04 270);
+
+  /* Primary: Sky Blue */
+  --primary: oklch(0.58 0.19 250);
+  --primary-foreground: oklch(0.99 0 0);
+
+  /* Secondary: Sunshine Yellow */
+  --secondary: oklch(0.82 0.17 85);
+  --secondary-foreground: oklch(0.18 0.04 270);
+
+  /* Muted: soft warm gray */
+  --muted: oklch(0.94 0.02 90);
+  --muted-foreground: oklch(0.52 0.04 270);
+
+  /* Accent: Grass Green */
+  --accent: oklch(0.65 0.2 145);
+  --accent-foreground: oklch(0.99 0 0);
+
+  /* Destructive: Coral Red */
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  /* Success: Grass Green */
+  --success: oklch(0.65 0.2 145);
+  --success-foreground: oklch(0.99 0 0);
+
+  /* Warning: Sunshine Yellow */
+  --warning: oklch(0.82 0.17 85);
+  --warning-foreground: oklch(0.18 0.04 270);
+
+  /* Border: Deep Ink outline */
+  --border: oklch(0.18 0.04 270);
+  --input: oklch(0.92 0.02 90);
+  --ring: oklch(0.58 0.19 250);
+
+  /* Chart colors */
+  --chart-1: oklch(0.58 0.19 250);
+  --chart-2: oklch(0.65 0.2 145);
+  --chart-3: oklch(0.82 0.17 85);
+  --chart-4: oklch(0.62 0.22 25);
+  --chart-5: oklch(0.72 0.18 310);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
+
+  html {
+    font-family: 'Nunito', 'Fredoka One', sans-serif;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Fredoka One', 'Nunito', sans-serif;
+    font-weight: 400; /* Fredoka One is inherently bold */
+    line-height: 1.1;
+  }
+
   button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  [type="button"]:not(:disabled),
-  [type="submit"]:not(:disabled),
-  [type="reset"]:not(:disabled),
-  a[href],
-  select:not(:disabled),
-  input[type="checkbox"]:not(:disabled),
-  input[type="radio"]:not(:disabled) {
+  [role="button"]:not([aria-disabled="true"]) {
     @apply cursor-pointer;
   }
 }
 
+/* ============================================================
+   Storybook Design Tokens — Custom Utilities
+   ============================================================ */
+
 @layer components {
-  /**
-   * Custom container utility that centers content and adds responsive padding.
-   *
-   * This overrides Tailwind's default container behavior to:
-   * - Auto-center content (mx-auto)
-   * - Add responsive horizontal padding
-   * - Set max-width for large screens
-   *
-   * Usage: <div className="container">...</div>
-   *
-   * For custom widths, use max-w-* utilities directly:
-   * <div className="max-w-6xl mx-auto px-4">...</div>
-   */
+  /* Container */
   .container {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1rem; /* 16px - mobile padding */
+    padding-left: 1rem;
     padding-right: 1rem;
   }
 
@@ -162,16 +154,234 @@
 
   @media (min-width: 640px) {
     .container {
-      padding-left: 1.5rem; /* 24px - tablet padding */
+      padding-left: 1.5rem;
       padding-right: 1.5rem;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      padding-left: 2rem; /* 32px - desktop padding */
+      padding-left: 2rem;
       padding-right: 2rem;
-      max-width: 1280px; /* Standard content width */
+      max-width: 1280px;
     }
+  }
+
+  /* ── Chunky Ink Button ─────────────────────────────────── */
+  /* The signature storybook button: thick border + offset shadow */
+  .btn-ink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 1.25rem;
+    letter-spacing: 0.02em;
+    border-radius: 1.25rem;
+    border: 3px solid oklch(0.18 0.04 270);
+    box-shadow: 4px 4px 0px oklch(0.18 0.04 270);
+    padding: 0.75rem 2rem;
+    transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+                box-shadow 120ms cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .btn-ink:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0px oklch(0.18 0.04 270);
+  }
+
+  .btn-ink:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-ink-blue {
+    background-color: oklch(0.58 0.19 250);
+    color: white;
+  }
+  .btn-ink-blue:hover:not(:disabled) {
+    background-color: oklch(0.52 0.19 250);
+  }
+
+  .btn-ink-yellow {
+    background-color: oklch(0.82 0.17 85);
+    color: oklch(0.18 0.04 270);
+  }
+  .btn-ink-yellow:hover:not(:disabled) {
+    background-color: oklch(0.78 0.17 85);
+  }
+
+  .btn-ink-green {
+    background-color: oklch(0.65 0.2 145);
+    color: white;
+  }
+  .btn-ink-green:hover:not(:disabled) {
+    background-color: oklch(0.58 0.2 145);
+  }
+
+  .btn-ink-red {
+    background-color: oklch(0.62 0.22 25);
+    color: white;
+  }
+  .btn-ink-red:hover:not(:disabled) {
+    background-color: oklch(0.56 0.22 25);
+  }
+
+  .btn-ink-white {
+    background-color: oklch(0.99 0.01 85);
+    color: oklch(0.18 0.04 270);
+  }
+  .btn-ink-white:hover:not(:disabled) {
+    background-color: oklch(0.96 0.02 85);
+  }
+
+  /* ── Ink Card ──────────────────────────────────────────── */
+  .card-ink {
+    background-color: oklch(0.99 0.015 85);
+    border: 3px solid oklch(0.18 0.04 270);
+    border-radius: 1.5rem;
+    box-shadow: 6px 6px 0px oklch(0.18 0.04 270);
+  }
+
+  /* ── Answer Button ─────────────────────────────────────── */
+  .answer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fredoka One', sans-serif;
+    font-size: 1.5rem;
+    border-radius: 1.25rem;
+    border: 3px solid oklch(0.18 0.04 270);
+    box-shadow: 5px 5px 0px oklch(0.18 0.04 270);
+    padding: 1rem 1.5rem;
+    min-height: 4rem;
+    transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+                box-shadow 120ms cubic-bezier(0.23, 1, 0.32, 1);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .answer-btn:active:not(:disabled) {
+    transform: translate(4px, 4px);
+    box-shadow: 1px 1px 0px oklch(0.18 0.04 270);
+  }
+
+  /* ── Floating Decoration ───────────────────────────────── */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33%       { transform: translateY(-10px) rotate(3deg); }
+    66%       { transform: translateY(-5px) rotate(-2deg); }
+  }
+
+  @keyframes floatSlow {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-16px); }
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes bounce-in {
+    0%   { transform: scale(0.3); opacity: 0; }
+    60%  { transform: scale(1.1); opacity: 1; }
+    80%  { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%       { transform: translateX(-8px); }
+    40%       { transform: translateX(8px); }
+    60%       { transform: translateX(-6px); }
+    80%       { transform: translateX(6px); }
+  }
+
+  @keyframes star-pop {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    70%  { transform: scale(1.3) rotate(5deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .animate-float       { animation: float 4s ease-in-out infinite; }
+  .animate-float-slow  { animation: floatSlow 6s ease-in-out infinite; }
+  .animate-spin-slow   { animation: spin-slow 12s linear infinite; }
+  .animate-bounce-in   { animation: bounce-in 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .animate-shake       { animation: shake 0.4s ease-in-out; }
+  .animate-star-pop    { animation: star-pop 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .animate-twinkle     { animation: twinkle 2s ease-in-out infinite; }
+
+  /* ── Screen transition wrapper ─────────────────────────── */
+  .screen-enter {
+    animation: slideInRight 0.25s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  /* ── HUD Star ──────────────────────────────────────────── */
+  .star-filled   { color: oklch(0.82 0.17 85); filter: drop-shadow(0 0 4px oklch(0.82 0.17 85 / 0.6)); }
+  .star-empty    { color: oklch(0.85 0.04 90); }
+
+  /* ── Grade Zone Colors ─────────────────────────────────── */
+  .zone-kg    { background-color: oklch(0.82 0.17 85); }   /* Yellow */
+  .zone-g1    { background-color: oklch(0.58 0.19 250); }  /* Blue */
+  .zone-g2    { background-color: oklch(0.65 0.2 145); }   /* Green */
+  .zone-g3    { background-color: oklch(0.62 0.22 25); }   /* Red/Coral */
+
+  /* ── Progress Bar ──────────────────────────────────────── */
+  .progress-track {
+    height: 1.25rem;
+    background-color: oklch(0.92 0.02 90);
+    border: 2.5px solid oklch(0.18 0.04 270);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, oklch(0.58 0.19 250), oklch(0.65 0.2 145));
+    border-radius: 9999px;
+    transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  /* ── Locked overlay ────────────────────────────────────── */
+  .locked-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: oklch(0.18 0.04 270 / 0.45);
+    border-radius: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-spin-slow,
+  .animate-bounce-in,
+  .animate-shake,
+  .animate-star-pop,
+  .animate-twinkle,
+  .screen-enter {
+    animation: none !important;
+    transition: none !important;
   }
 }
