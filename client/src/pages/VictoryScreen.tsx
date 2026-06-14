@@ -8,6 +8,8 @@
  *  - Full-screen react-confetti burst
  *  - Animated trophy + star cascade
  *  - Bilingual headline: "You are a Math Genius!" / "أنت عبقري رياضيات!"
+ *  - Name-input gate → "Get My Certificate" CTA
+ *  - GraduationCertificate overlay with print support
  *  - "Show Parents" CTA → Parents Dashboard
  *  - "Endless Challenge" unlock button → Endless Mode
  *  - "Play Again" → Level Select
@@ -21,6 +23,7 @@ import { useGame } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSoundEngine } from "@/hooks/useSoundEngine";
 import BrandingFooter from "@/components/BrandingFooter";
+import GraduationCertificate from "@/components/GraduationCertificate";
 
 const LOGO_STAR =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/logo-star-VXHLUR84pLpFzMGbXzZvfX.webp";
@@ -41,6 +44,11 @@ export default function VictoryScreen() {
   const [buttonsVisible, setButtonsVisible] = useState(false);
   const fanfarePlayed = useRef(false);
 
+  // Certificate state
+  const [childName, setChildName] = useState("");
+  const [nameInputVisible, setNameInputVisible] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+
   const isAr = language === "ar";
   const displayFont = isAr ? "'Tajawal', sans-serif" : "'Fredoka One', cursive";
   const bodyFont = isAr ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
@@ -53,7 +61,7 @@ export default function VictoryScreen() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // Sequence: fanfare → stars → badge → buttons
+  // Sequence: fanfare → stars → badge → buttons → name input
   useEffect(() => {
     if (!fanfarePlayed.current) {
       fanfarePlayed.current = true;
@@ -65,10 +73,12 @@ export default function VictoryScreen() {
     const t1 = setTimeout(() => setStarsVisible(true), 400);
     const t2 = setTimeout(() => setBadgeVisible(true), 900);
     const t3 = setTimeout(() => setButtonsVisible(true), 1600);
-    const t4 = setTimeout(() => setConfettiActive(false), 8000);
-    return () => [t1, t2, t3, t4].forEach(clearTimeout);
+    const t4 = setTimeout(() => setNameInputVisible(true), 2200);
+    const t5 = setTimeout(() => setConfettiActive(false), 8000);
+    return () => [t1, t2, t3, t4, t5].forEach(clearTimeout);
   }, [playFanfare, playStar]);
 
+  // ── Copy strings ──────────────────────────────────────────
   const headline = isAr ? "أنت عبقري رياضيات!" : "You are a Math Genius!";
   const subline = isAr
     ? "لقد أتممت جميع المستويات! أنت بطل حقيقي 🏆"
@@ -78,242 +88,360 @@ export default function VictoryScreen() {
   const playAgainLabel = isAr ? "📚 اختر المستوى" : "📚 Choose Level";
   const unlockedLabel = isAr ? "🔓 تم الفتح!" : "🔓 Unlocked!";
   const starsLabel = isAr ? "نجوم مكتسبة" : "Stars Earned";
+  const certGateTitle = isAr
+    ? "🎓 احصل على شهادتك الرسمية!"
+    : "🎓 Get Your Official Certificate!";
+  const certGatePlaceholder = isAr
+    ? "أدخل اسمك هنا..."
+    : "Enter your name here...";
+  const certGateLabel = isAr
+    ? "أدخل اسمك للحصول على شهادتك الرسمية"
+    : "Enter your name for your official certificate";
+  const certGateButton = isAr
+    ? "🏅 اعرض شهادتي"
+    : "🏅 Show My Certificate";
+
+  const handleGetCertificate = () => {
+    if (childName.trim().length > 0) {
+      setShowCertificate(true);
+    }
+  };
 
   return (
-    <div
-      className="relative min-h-screen flex flex-col overflow-hidden"
-      dir={isRTL ? "rtl" : "ltr"}
-      style={{
-        background: "linear-gradient(160deg, oklch(0.22 0.06 270) 0%, oklch(0.16 0.08 280) 50%, oklch(0.12 0.06 300) 100%)",
-      }}
-    >
-      {/* Confetti */}
-      {confettiActive && (
-        <Confetti
-          width={windowSize.width}
-          height={windowSize.height}
-          numberOfPieces={350}
-          recycle={false}
-          colors={["#FBBF24", "#34D399", "#60A5FA", "#F472B6", "#A78BFA", "#FCD34D", "#6EE7B7"]}
-          gravity={0.25}
-          style={{ position: "fixed", top: 0, left: 0, zIndex: 50, pointerEvents: "none" }}
-        />
-      )}
-
-      {/* Floating star particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute text-2xl"
-            style={{ left: `${(i * 17 + 5) % 95}%`, top: `${(i * 23 + 10) % 85}%` }}
-            animate={{ y: [-8, 8, -8], rotate: [-10, 10, -10], opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 2.5 + (i % 4) * 0.5, repeat: Infinity, ease: "easeInOut", delay: (i % 6) * 0.3 }}
-          >
-            {["⭐", "🌟", "✨", "💫"][i % 4]}
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Main content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
-
-        {/* Trophy + Owl */}
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0, y: 40 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease }}
-          className="relative mb-6"
-        >
-          {/* Giant trophy emoji */}
-          <div
-            style={{
-              fontSize: "clamp(5rem, 15vw, 8rem)",
-              lineHeight: 1,
-              filter: "drop-shadow(0 0 40px oklch(0.82 0.17 85 / 0.8))",
-            }}
-          >
-            🏆
-          </div>
-          {/* Owl mascot overlay */}
-          <motion.img
-            src={MASCOT_OWL}
-            alt="Ollie the Owl"
-            className="absolute -bottom-4 -right-8 w-20 h-20 object-contain"
-            animate={{ rotate: [-5, 5, -5] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+    <>
+      <div
+        className="relative min-h-screen flex flex-col overflow-hidden"
+        dir={isRTL ? "rtl" : "ltr"}
+        style={{
+          background: "linear-gradient(160deg, oklch(0.22 0.06 270) 0%, oklch(0.16 0.08 280) 50%, oklch(0.12 0.06 300) 100%)",
+        }}
+      >
+        {/* Confetti */}
+        {confettiActive && (
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            numberOfPieces={350}
+            recycle={false}
+            colors={["#FBBF24", "#34D399", "#60A5FA", "#F472B6", "#A78BFA", "#FCD34D", "#6EE7B7"]}
+            gravity={0.25}
+            style={{ position: "fixed", top: 0, left: 0, zIndex: 50, pointerEvents: "none" }}
           />
-        </motion.div>
+        )}
 
-        {/* Stars row */}
-        <AnimatePresence>
-          {starsVisible && (
+        {/* Floating star particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          {Array.from({ length: 20 }).map((_, i) => (
             <motion.div
-              className="flex items-center gap-2 mb-6"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, ease }}
+              key={i}
+              className="absolute text-2xl"
+              style={{ left: `${(i * 17 + 5) % 95}%`, top: `${(i * 23 + 10) % 85}%` }}
+              animate={{ y: [-8, 8, -8], rotate: [-10, 10, -10], opacity: [0.3, 0.7, 0.3] }}
+              transition={{ duration: 2.5 + (i % 4) * 0.5, repeat: Infinity, ease: "easeInOut", delay: (i % 6) * 0.3 }}
             >
-              {[0, 1, 2].map((i) => (
-                <motion.img
-                  key={i}
-                  src={LOGO_STAR}
-                  alt="star"
-                  className="w-12 h-12 object-contain"
-                  initial={{ scale: 0, rotate: -30 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: i * 0.15, duration: 0.4, ease }}
-                />
-              ))}
-              <span
+              {["⭐", "🌟", "✨", "💫"][i % 4]}
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Main content */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-12 text-center">
+
+          {/* Trophy + Owl */}
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0, y: 40 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease }}
+            className="relative mb-6"
+          >
+            <div
+              style={{
+                fontSize: "clamp(5rem, 15vw, 8rem)",
+                lineHeight: 1,
+                filter: "drop-shadow(0 0 40px oklch(0.82 0.17 85 / 0.8))",
+              }}
+            >
+              🏆
+            </div>
+            <motion.img
+              src={MASCOT_OWL}
+              alt="Ollie the Owl"
+              className="absolute -bottom-4 -right-8 w-20 h-20 object-contain"
+              animate={{ rotate: [-5, 5, -5] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+
+          {/* Stars row */}
+          <AnimatePresence>
+            {starsVisible && (
+              <motion.div
+                className="flex items-center gap-2 mb-6"
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, ease }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <motion.img
+                    key={i}
+                    src={LOGO_STAR}
+                    alt="star"
+                    className="w-12 h-12 object-contain"
+                    initial={{ scale: 0, rotate: -30 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: i * 0.15, duration: 0.4, ease }}
+                  />
+                ))}
+                <span
+                  style={{
+                    fontFamily: bodyFont,
+                    fontSize: "1.1rem",
+                    color: "oklch(0.82 0.17 85)",
+                    fontWeight: 700,
+                    marginInlineStart: "0.5rem",
+                  }}
+                >
+                  <span dir="ltr">{totalStarsEarned}</span> {starsLabel}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Headline badge */}
+          <AnimatePresence>
+            {badgeVisible && (
+              <motion.div
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, ease }}
+                className="mb-4"
+              >
+                <h1
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "clamp(2rem, 6vw, 3.5rem)",
+                    color: "oklch(0.82 0.17 85)",
+                    textShadow: "0 0 40px oklch(0.82 0.17 85 / 0.5), 0 4px 0 oklch(0.18 0.04 270)",
+                    lineHeight: 1.15,
+                    marginBottom: "0.5rem",
+                  }}
+                >
+                  {headline}
+                </h1>
+                <p
+                  style={{
+                    fontFamily: bodyFont,
+                    fontSize: "clamp(1rem, 3vw, 1.3rem)",
+                    color: "oklch(0.85 0.04 270)",
+                    maxWidth: "36ch",
+                    margin: "0 auto",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {subline}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Unlock badge */}
+          <AnimatePresence>
+            {badgeVisible && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5, ease }}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-6"
                 style={{
+                  background: "oklch(0.65 0.2 145 / 0.25)",
+                  border: "2px solid oklch(0.65 0.2 145 / 0.6)",
                   fontFamily: bodyFont,
-                  fontSize: "1.1rem",
-                  color: "oklch(0.82 0.17 85)",
+                  fontSize: "1rem",
+                  color: "oklch(0.85 0.12 145)",
                   fontWeight: 700,
-                  marginInlineStart: "0.5rem",
                 }}
               >
-                <span dir="ltr">{totalStarsEarned}</span> {starsLabel}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {unlockedLabel}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Headline badge */}
-        <AnimatePresence>
-          {badgeVisible && (
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.6, ease }}
-              className="mb-4"
-            >
-              <h1
+          {/* ── Certificate Name Gate ── */}
+          <AnimatePresence>
+            {nameInputVisible && (
+              <motion.div
+                initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.5, ease }}
+                className="w-full max-w-md mb-6 rounded-2xl p-5"
                 style={{
-                  fontFamily: displayFont,
-                  fontSize: "clamp(2rem, 6vw, 3.5rem)",
-                  color: "oklch(0.82 0.17 85)",
-                  textShadow: "0 0 40px oklch(0.82 0.17 85 / 0.5), 0 4px 0 oklch(0.18 0.04 270)",
-                  lineHeight: 1.15,
-                  marginBottom: "0.5rem",
+                  background: "oklch(0.97 0.04 85 / 0.12)",
+                  border: "2.5px solid oklch(0.78 0.18 85 / 0.5)",
+                  backdropFilter: "blur(8px)",
                 }}
               >
-                {headline}
-              </h1>
-              <p
+                <p
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "1.05rem",
+                    color: "oklch(0.82 0.17 85)",
+                    fontWeight: 700,
+                    marginBottom: "0.6em",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {certGateTitle}
+                </p>
+                <p
+                  style={{
+                    fontFamily: bodyFont,
+                    fontSize: "0.85rem",
+                    color: "oklch(0.78 0.04 270)",
+                    marginBottom: "0.8em",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {certGateLabel}
+                </p>
+                <div className="flex gap-2 flex-col sm:flex-row">
+                  <input
+                    type="text"
+                    value={childName}
+                    onChange={(e) => setChildName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleGetCertificate()}
+                    placeholder={certGatePlaceholder}
+                    maxLength={40}
+                    dir={isRTL ? "rtl" : "ltr"}
+                    style={{
+                      flex: 1,
+                      padding: "0.65em 1em",
+                      borderRadius: "12px",
+                      border: "2.5px solid oklch(0.68 0.18 85 / 0.7)",
+                      background: "oklch(0.99 0.02 85 / 0.9)",
+                      fontFamily: bodyFont,
+                      fontSize: "1rem",
+                      color: "oklch(0.18 0.04 270)",
+                      outline: "none",
+                      fontWeight: 600,
+                    }}
+                  />
+                  <motion.button
+                    onClick={handleGetCertificate}
+                    disabled={childName.trim().length === 0}
+                    whileHover={childName.trim().length > 0 ? { scale: 1.04 } : {}}
+                    whileTap={childName.trim().length > 0 ? { scale: 0.96 } : {}}
+                    style={{
+                      padding: "0.65em 1.4em",
+                      borderRadius: "12px",
+                      fontFamily: displayFont,
+                      fontSize: "0.95rem",
+                      fontWeight: 700,
+                      background: childName.trim().length > 0
+                        ? "linear-gradient(135deg, oklch(0.78 0.18 85), oklch(0.68 0.2 65))"
+                        : "oklch(0.35 0.04 270)",
+                      color: childName.trim().length > 0 ? "oklch(0.18 0.04 270)" : "oklch(0.55 0.04 270)",
+                      border: "2.5px solid oklch(0.18 0.04 270)",
+                      boxShadow: childName.trim().length > 0 ? "3px 3px 0 oklch(0.18 0.04 270)" : "none",
+                      cursor: childName.trim().length > 0 ? "pointer" : "not-allowed",
+                      whiteSpace: "nowrap",
+                      transition: "background 0.2s, box-shadow 0.2s",
+                    }}
+                  >
+                    {certGateButton}
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Action buttons */}
+          <AnimatePresence>
+            {buttonsVisible && (
+              <motion.div
+                className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease }}
+              >
+                {/* Show Parents — primary CTA */}
+                <motion.button
+                  onClick={() => navigateTo("parents")}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex-1 w-full py-4 rounded-2xl text-lg font-bold"
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "1.15rem",
+                    background: "oklch(0.82 0.17 85)",
+                    color: "oklch(0.18 0.04 270)",
+                    border: "3px solid oklch(0.18 0.04 270)",
+                    boxShadow: `${isRTL ? "-5px" : "5px"} 5px 0 oklch(0.18 0.04 270)`,
+                    cursor: "pointer",
+                  }}
+                >
+                  {showParentsLabel}
+                </motion.button>
+
+                {/* Endless Challenge */}
+                <motion.button
+                  onClick={startEndlessMode}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex-1 w-full py-4 rounded-2xl text-lg font-bold"
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "1.15rem",
+                    background: "oklch(0.62 0.22 25)",
+                    color: "white",
+                    border: "3px solid oklch(0.18 0.04 270)",
+                    boxShadow: `${isRTL ? "-5px" : "5px"} 5px 0 oklch(0.18 0.04 270)`,
+                    cursor: "pointer",
+                  }}
+                >
+                  {endlessLabel}
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {buttonsVisible && (
+              <motion.button
+                onClick={goToLevels}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+                className="mt-4 px-6 py-2 rounded-xl"
                 style={{
                   fontFamily: bodyFont,
-                  fontSize: "clamp(1rem, 3vw, 1.3rem)",
-                  color: "oklch(0.85 0.04 270)",
-                  maxWidth: "36ch",
-                  margin: "0 auto",
-                  lineHeight: 1.5,
-                }}
-              >
-                {subline}
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Unlock badge */}
-        <AnimatePresence>
-          {badgeVisible && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2, duration: 0.5, ease }}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full mb-8"
-              style={{
-                background: "oklch(0.65 0.2 145 / 0.25)",
-                border: "2px solid oklch(0.65 0.2 145 / 0.6)",
-                fontFamily: bodyFont,
-                fontSize: "1rem",
-                color: "oklch(0.85 0.12 145)",
-                fontWeight: 700,
-              }}
-            >
-              {unlockedLabel}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Action buttons */}
-        <AnimatePresence>
-          {buttonsVisible && (
-            <motion.div
-              className="flex flex-col sm:flex-row items-center gap-4 w-full max-w-md"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease }}
-            >
-              {/* Show Parents — primary CTA */}
-              <motion.button
-                onClick={() => navigateTo("parents")}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex-1 w-full py-4 rounded-2xl text-lg font-bold"
-                style={{
-                  fontFamily: displayFont,
-                  fontSize: "1.15rem",
-                  background: "oklch(0.82 0.17 85)",
-                  color: "oklch(0.18 0.04 270)",
-                  border: "3px solid oklch(0.18 0.04 270)",
-                  boxShadow: `${isRTL ? "-5px" : "5px"} 5px 0 oklch(0.18 0.04 270)`,
+                  fontSize: "0.95rem",
+                  color: "oklch(0.75 0.04 270)",
+                  background: "transparent",
+                  border: "1.5px solid oklch(0.75 0.04 270 / 0.4)",
                   cursor: "pointer",
                 }}
+                whileHover={{ color: "oklch(0.95 0 0)", borderColor: "oklch(0.95 0 0 / 0.6)" }}
               >
-                {showParentsLabel}
+                {playAgainLabel}
               </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
 
-              {/* Endless Challenge */}
-              <motion.button
-                onClick={startEndlessMode}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex-1 w-full py-4 rounded-2xl text-lg font-bold"
-                style={{
-                  fontFamily: displayFont,
-                  fontSize: "1.15rem",
-                  background: "oklch(0.62 0.22 25)",
-                  color: "white",
-                  border: "3px solid oklch(0.18 0.04 270)",
-                  boxShadow: `${isRTL ? "-5px" : "5px"} 5px 0 oklch(0.18 0.04 270)`,
-                  cursor: "pointer",
-                }}
-              >
-                {endlessLabel}
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {buttonsVisible && (
-            <motion.button
-              onClick={goToLevels}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.4 }}
-              className="mt-4 px-6 py-2 rounded-xl"
-              style={{
-                fontFamily: bodyFont,
-                fontSize: "0.95rem",
-                color: "oklch(0.75 0.04 270)",
-                background: "transparent",
-                border: "1.5px solid oklch(0.75 0.04 270 / 0.4)",
-                cursor: "pointer",
-              }}
-              whileHover={{ color: "oklch(0.95 0 0)", borderColor: "oklch(0.95 0 0 / 0.6)" }}
-            >
-              {playAgainLabel}
-            </motion.button>
-          )}
-        </AnimatePresence>
+        <BrandingFooter />
       </div>
 
-      <BrandingFooter />
-    </div>
+      {/* ── Certificate overlay ── */}
+      <AnimatePresence>
+        {showCertificate && (
+          <GraduationCertificate
+            childName={childName.trim()}
+            totalStars={totalStarsEarned}
+            onClose={() => setShowCertificate(false)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
