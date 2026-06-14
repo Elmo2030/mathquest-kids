@@ -16,6 +16,8 @@ import LevelSelectScreen from "./pages/LevelSelectScreen";
 import GameScreen from "./pages/GameScreen";
 import ParentsScreen from "./pages/ParentsScreen";
 import SummaryScreen from "./pages/SummaryScreen";
+import VictoryScreen from "./pages/VictoryScreen";
+import EndlessScreen from "./pages/EndlessScreen";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const pageVariants = {
@@ -41,6 +43,8 @@ function GameRouter() {
         {screen === "game"    && <GameScreen />}
         {screen === "parents" && <ParentsScreen />}
         {screen === "summary"  && <SummaryScreen />}
+        {screen === "victory"  && <VictoryScreen />}
+        {screen === "endless"  && <EndlessScreen />}
       </motion.div>
     </AnimatePresence>
   );

@@ -302,7 +302,7 @@ function LevelCard({
 }
 
 export default function LevelSelectScreen() {
-  const { goHome, levels, totalStarsEarned } = useGame();
+  const { goHome, levels, totalStarsEarned, isEndlessModeUnlocked, startEndlessMode } = useGame();
   const { t, isRTL } = useLanguage();
   const totalPossible = levels.reduce((s, l) => s + l.totalStars, 0);
   const [expandedGrade, setExpandedGrade] = useState<GradeZone | null>(null);
@@ -430,6 +430,47 @@ export default function LevelSelectScreen() {
               </span>
             </div>
           </div>
+        </motion.div>
+        {/* Endless Challenge unlock button */}
+        <motion.div
+          className="max-w-lg mx-auto mt-4 mb-6"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.75, duration: 0.35 }}
+        >
+          <motion.button
+            onClick={() => isEndlessModeUnlocked && startEndlessMode()}
+            whileHover={isEndlessModeUnlocked ? { scale: 1.04, y: -2 } : {}}
+            whileTap={isEndlessModeUnlocked ? { scale: 0.97 } : {}}
+            className="w-full py-4 rounded-2xl flex items-center justify-center gap-3"
+            style={{
+              fontFamily: displayFont,
+              fontSize: "1.15rem",
+              fontWeight: 700,
+              background: isEndlessModeUnlocked ? "oklch(0.62 0.22 25)" : "oklch(0.55 0.04 270)",
+              color: "white",
+              border: "3px solid oklch(0.18 0.04 270)",
+              boxShadow: isEndlessModeUnlocked ? `${isRTL ? "-5px" : "5px"} 5px 0 oklch(0.18 0.04 270)` : "none",
+              cursor: isEndlessModeUnlocked ? "pointer" : "not-allowed",
+              opacity: isEndlessModeUnlocked ? 1 : 0.55,
+            }}
+          >
+            <span style={{ fontSize: "1.4rem" }}>{isEndlessModeUnlocked ? "🔥" : "🔒"}</span>
+            <span>{isRTL ? "تحدي بلا نهاية" : "Endless Challenge"}</span>
+            {isEndlessModeUnlocked && (
+              <span
+                className="px-2 py-0.5 rounded-full text-xs"
+                style={{ background: "oklch(0.82 0.17 85)", color: "oklch(0.18 0.04 270)", fontWeight: 800 }}
+              >
+                {isRTL ? "مفتوح!" : "Unlocked!"}
+              </span>
+            )}
+            {!isEndlessModeUnlocked && (
+              <span className="text-sm opacity-75" style={{ fontFamily: bodyFont }}>
+                {isRTL ? "(أكمل جميع المستويات)" : "(Complete all levels)"}
+              </span>
+            )}
+          </motion.button>
         </motion.div>
       </main>
     </div>

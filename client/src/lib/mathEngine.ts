@@ -641,6 +641,29 @@ export function generateRound(level: GradeLevel, count: number = QUESTIONS_PER_R
 }
 
 /**
+ * Generate an endless round mixing ALL sub-levels from ALL grades.
+ * Questions are randomly sampled from the full KG–G3 pool.
+ * No maximum — this function can be called repeatedly to keep the game going.
+ */
+export function generateEndlessRound(count: number = QUESTIONS_PER_ROUND): Question[] {
+  const questions: Question[] = [];
+  let lastSubId: string | null = null;
+
+  for (let i = 0; i < count; i++) {
+    let sub: SubLevel;
+    let attempts = 0;
+    do {
+      sub = randomItem(SUB_LEVELS);
+      attempts++;
+    } while (sub.id === lastSubId && attempts < 15);
+    lastSubId = sub.id;
+    questions.push(generateQuestionForSubLevel(sub.id));
+  }
+
+  return questions;
+}
+
+/**
  * Validate a user's answer choice.
  */
 export function validateAnswer(question: Question, choiceId: string): boolean {

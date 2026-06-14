@@ -26,6 +26,7 @@ import React, {
 import {
   generateQuestionForSubLevel,
   generateRound,
+  generateEndlessRound,
   validateAnswer,
   calculateStars,
   getSubLevels,
@@ -37,7 +38,7 @@ import {
 
 // ── Screen & Level Types ──────────────────────────────────────
 
-export type Screen = "home" | "levels" | "game" | "summary" | "parents";
+export type Screen = "home" | "levels" | "game" | "summary" | "parents" | "victory" | "endless";
 export type GradeZone = "KG" | "G1" | "G2" | "G3";
 
 export interface LevelInfo {
@@ -220,7 +221,7 @@ function createRound(
 type RoundAction =
   | { type: "ANSWER"; choiceId: string }
   | { type: "NEXT_QUESTION" }
-  | { type: "RESET"; level: GradeLevel; focusedSubLevelId?: string | null };
+  | { type: "RESET"; level: GradeLevel; focusedSubLevelId?: string | null; endless?: boolean };
 
 function roundReducer(state: RoundState, action: RoundAction): RoundState {
   switch (action.type) {
@@ -274,6 +275,21 @@ function roundReducer(state: RoundState, action: RoundAction): RoundState {
     }
 
     case "RESET": {
+      if (action.endless) {
+        // Endless mode: generate a large batch of mixed questions from all grades
+        const questions = generateEndlessRound(QUESTIONS_PER_ROUND);
+        return {
+          questions,
+          currentIndex: 0,
+          results: [],
+          score: 0,
+          lives: MAX_LIVES,
+          starsEarned: 0,
+          isComplete: false,
+          focusedSubLevelId: null,
+          subLevelCorrectThisRound: 0,
+        };
+      }
       return createRound(action.level, action.focusedSubLevelId ?? null);
     }
 
@@ -351,6 +367,14 @@ interface GameContextValue {
   // Derived helpers
   totalStarsEarned: number;
 
+  // Endless mode
+  isEndlessModeUnlocked: boolean;
+  endlessScore: number;
+  startEndlessMode: () => void;
+
+  // All levels complete
+  allLevelsComplete: boolean;
+
   // Progress reset
   resetProgress: () => void;
 }
@@ -388,6 +412,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   const [round, dispatch] = useReducer(roundReducer, createRound("KG"));
+  const [endlessScore, setEndlessScore] = useState<number>(() =>
+    loadFromStorage<number>("mq_endless_score_v1", 0)
+  );
 
   // Track playtime: record session start when entering game screen
   const sessionStartRef = useRef<number | null>(null);
@@ -408,6 +435,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
   }, [screen]);
 
+  // Persist endless score
+  useEffect(() => { saveToStorage("mq_endless_score_v1", endlessScore); }, [endlessScore]);
+
   // Persist to localStorage whenever state changes
   useEffect(() => { saveToStorage(LS_LEVELS_KEY, levels); }, [levels]);
   useEffect(() => { saveToStorage(LS_SUBLEVEL_KEY, subLevelProgress); }, [subLevelProgress]);
@@ -427,6 +457,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const goToLevels = useCallback(() => setScreen("levels"), []);
+
+  // ── Derived: all levels complete ────────────────────────────
+  const allLevelsComplete = levels.every((l) => l.stars >= 1) &&
+    subLevelProgress.every((s) => s.passed);
+
+  const isEndlessModeUnlocked = allLevelsComplete;
+
+  // ── Endless Mode ─────────────────────────────────────────────
+  const startEndlessMode = useCallback(() => {
+    dispatch({ type: "RESET", level: "KG", focusedSubLevelId: null, endless: true });
+    setSelectedLevel(null);
+    setActiveSubLevelId(null);
+    setScreen("endless");
+  }, []);
 
   // ── Sub-level helpers ────────────────────────────────────────
 
@@ -546,7 +590,20 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      setScreen("summary");
+      // Check if all grades are now mastered → Victory Screen
+      const updatedSubLevels = subLevelProgress.map((sp) => {
+        const correct = subLevelCorrectMap[sp.subLevelId] ?? 0;
+        const attempts = subLevelAttemptMap[sp.subLevelId] ?? 0;
+        if (attempts === 0) return sp;
+        const newCorrectCount = sp.passed ? sp.correctCount : sp.correctCount + correct;
+        const passed = sp.passed || newCorrectCount >= PASS_THRESHOLD;
+        return { ...sp, correctCount: passed && !sp.passed ? 0 : newCorrectCount, passed };
+      });
+      const allNowComplete =
+        selectedLevel === "G3" &&
+        updatedSubLevels.every((s) => s.passed);
+
+      setScreen(allNowComplete ? "victory" : "summary");
     } else {
       dispatch({ type: "NEXT_QUESTION" });
     }
@@ -569,8 +626,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setSubLevelProgress(buildInitialSubLevelProgress());
     setAnswerHistory([]);
     setAnalytics(INITIAL_ANALYTICS);
+    setEndlessScore(0);
     // Clear all localStorage keys
-    [LS_LEVELS_KEY, LS_SUBLEVEL_KEY, LS_HISTORY_KEY, LS_ANALYTICS_KEY].forEach(
+    [LS_LEVELS_KEY, LS_SUBLEVEL_KEY, LS_HISTORY_KEY, LS_ANALYTICS_KEY, "mq_endless_score_v1"].forEach(
       (key) => {
         try { localStorage.removeItem(key); } catch { /* ignore */ }
       }
@@ -606,6 +664,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         nextQuestion,
         restartRound,
         totalStarsEarned,
+        isEndlessModeUnlocked,
+        endlessScore,
+        startEndlessMode,
+        allLevelsComplete,
         resetProgress,
       }}
     >
