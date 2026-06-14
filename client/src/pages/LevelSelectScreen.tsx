@@ -15,6 +15,182 @@ import MascotOwl from "@/components/MascotOwl";
 import LanguageToggle from "@/components/LanguageToggle";
 import LtrNum from "@/components/LtrNum";
 
+// ── Locked-level encouragement modal ────────────────────────────
+function LockedModal({
+  level,
+  prevLevel,
+  onClose,
+}: {
+  level: LevelInfo;
+  prevLevel: LevelInfo | null;
+  onClose: () => void;
+}) {
+  const { isRTL } = useLanguage();
+  const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', cursive";
+  const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
+  const ease = [0.23, 1, 0.32, 1] as [number, number, number, number];
+
+  const gradeNames: Record<GradeZone, { en: string; ar: string }> = {
+    KG: { en: "Kindergarten", ar: "الروضة" },
+    G1: { en: "Grade 1",      ar: "الصف 1" },
+    G2: { en: "Grade 2",      ar: "الصف 2" },
+    G3: { en: "Grade 3",      ar: "الصف 3" },
+  };
+
+  const thisName  = isRTL ? gradeNames[level.id].ar   : gradeNames[level.id].en;
+  const prevName  = prevLevel ? (isRTL ? gradeNames[prevLevel.id].ar : gradeNames[prevLevel.id].en) : "";
+
+  const title    = isRTL ? `🔒 ${thisName} مقفول!`                   : `🔒 ${thisName} is Locked!`;
+  const message  = isRTL
+    ? `أكمل ${prevName} واحصل على نجمة واحدة على الأقل لفتح هذا المستوى! 🌟`
+    : `Complete ${prevName} and earn at least 1 star to unlock this level! 🌟`;
+  const closeBtn = isRTL ? "حسناً، سأحاول!" : "OK, I'll try!";
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClose}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0" style={{ background: "oklch(0 0 0 / 0.55)" }} />
+
+      {/* Card */}
+      <motion.div
+        className="relative z-10 flex flex-col items-center text-center px-7 py-8 rounded-3xl"
+        style={{
+          background: "oklch(0.985 0.025 90)",
+          border: "3px solid oklch(0.18 0.04 270)",
+          boxShadow: "6px 6px 0 oklch(0.18 0.04 270)",
+          maxWidth: "360px",
+          width: "100%",
+        }}
+        initial={{ scale: 0.8, opacity: 0, y: 30 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.85, opacity: 0, y: 20 }}
+        transition={{ duration: 0.35, ease }}
+        onClick={(e) => e.stopPropagation()}
+        dir={isRTL ? "rtl" : "ltr"}
+      >
+        {/* Bouncing lock */}
+        <motion.div
+          animate={{ y: [-4, 4, -4] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          style={{ fontSize: "3.5rem", marginBottom: "0.5rem" }}
+        >
+          🔒
+        </motion.div>
+
+        <h2
+          style={{
+            fontFamily: displayFont,
+            fontSize: "1.4rem",
+            color: "oklch(0.18 0.04 270)",
+            marginBottom: "0.6rem",
+          }}
+        >
+          {title}
+        </h2>
+
+        <p
+          style={{
+            fontFamily: bodyFont,
+            fontSize: "1rem",
+            color: "oklch(0.35 0.04 270)",
+            lineHeight: 1.6,
+            marginBottom: "1.5rem",
+          }}
+        >
+          {message}
+        </p>
+
+        {/* Prev level hint */}
+        {prevLevel && (
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-2xl mb-5"
+            style={{
+              background: `${prevLevel.bgColor}33`,
+              border: `2px solid ${prevLevel.bgColor}88`,
+            }}
+          >
+            <span style={{ fontSize: "1.6rem" }}>{prevLevel.emoji}</span>
+            <span style={{ fontFamily: displayFont, fontSize: "0.95rem", color: "oklch(0.18 0.04 270)" }}>
+              {prevName}
+            </span>
+            <span style={{ fontSize: "1.2rem" }}>⭐</span>
+          </div>
+        )}
+
+        <motion.button
+          onClick={onClose}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
+          className="w-full py-3.5 rounded-2xl font-bold"
+          style={{
+            fontFamily: displayFont,
+            fontSize: "1.05rem",
+            background: "oklch(0.82 0.17 85)",
+            color: "oklch(0.18 0.04 270)",
+            border: "3px solid oklch(0.18 0.04 270)",
+            boxShadow: "4px 4px 0 oklch(0.18 0.04 270)",
+            cursor: "pointer",
+          }}
+        >
+          {closeBtn}
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// ── Stars progress bar ───────────────────────────────────────────
+function StarsProgressBar({ stars, total }: { stars: number; total: number }) {
+  const ease = [0.23, 1, 0.32, 1] as [number, number, number, number];
+  const pct = total > 0 ? Math.round((stars / total) * 100) : 0;
+  return (
+    <div className="px-5 pb-3 pt-0.5">
+      <div className="flex items-center gap-2">
+        <div
+          className="flex-1 rounded-full overflow-hidden"
+          style={{
+            height: "8px",
+            background: "oklch(0.18 0.04 270 / 0.15)",
+            border: "1.5px solid oklch(0.18 0.04 270 / 0.25)",
+          }}
+        >
+          <motion.div
+            style={{
+              height: "100%",
+              borderRadius: "9999px",
+              background:
+                pct === 100
+                  ? "oklch(0.65 0.2 145)"
+                  : "linear-gradient(90deg, oklch(0.82 0.17 85), oklch(0.78 0.19 65))",
+            }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease, delay: 0.2 }}
+          />
+        </div>
+        <span
+          style={{
+            fontFamily: "'Fredoka One', cursive",
+            fontSize: "0.78rem",
+            color: "oklch(0.18 0.04 270)",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {stars}/{total} ⭐
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const LEVEL_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/level-bg-Am4tSjW7v3sFBcfAVC3Ehm.webp";
 const LOGO_STAR =
@@ -129,12 +305,11 @@ function LevelCard({
           </span>
         </div>
       )}
-      {/* Card header */}
+      {/* Card header — clickable even when locked (shows encouragement modal) */}
       <button
         className="w-full text-start"
         style={{ background: level.bgColor }}
         onClick={onToggle}
-        disabled={!level.unlocked}
         aria-expanded={expanded}
         aria-label={`${label} — ${level.unlocked ? (expanded ? "collapse" : "expand") : "locked"}`}
       >
@@ -193,7 +368,7 @@ function LevelCard({
 
         {/* Sub-level dot bar */}
         {level.unlocked && subLevels.length > 0 && (
-          <div className="flex gap-1 px-5 pb-4 pt-1">
+          <div className="flex gap-1 px-5 pb-2 pt-1">
             {subLevels.map((sp) => (
               <div
                 key={sp.subLevelId}
@@ -208,6 +383,11 @@ function LevelCard({
               />
             ))}
           </div>
+        )}
+
+        {/* Stars progress bar — always visible for unlocked levels */}
+        {level.unlocked && (
+          <StarsProgressBar stars={level.stars} total={level.totalStars} />
         )}
       </button>
 
@@ -339,12 +519,18 @@ export default function LevelSelectScreen() {
   const { t, isRTL } = useLanguage();
   const totalPossible = levels.reduce((s, l) => s + l.totalStars, 0);
   const [expandedGrade, setExpandedGrade] = useState<GradeZone | null>(null);
+  const [lockedModalLevel, setLockedModalLevel] = useState<LevelInfo | null>(null);
 
   const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
   const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
 
   const handleToggle = (id: GradeZone, unlocked: boolean) => {
-    if (!unlocked) return;
+    if (!unlocked) {
+      // Show encouragement modal instead of silently ignoring
+      const level = levels.find((l) => l.id === id);
+      if (level) setLockedModalLevel(level);
+      return;
+    }
     setExpandedGrade((prev) => (prev === id ? null : id));
   };
 
@@ -506,6 +692,20 @@ export default function LevelSelectScreen() {
           </motion.button>
         </motion.div>
       </main>
+
+      {/* Locked-level encouragement modal */}
+      <AnimatePresence>
+        {lockedModalLevel && (
+          <LockedModal
+            level={lockedModalLevel}
+            prevLevel={(() => {
+              const idx = levels.findIndex((l) => l.id === lockedModalLevel.id);
+              return idx > 0 ? levels[idx - 1] : null;
+            })()}
+            onClose={() => setLockedModalLevel(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

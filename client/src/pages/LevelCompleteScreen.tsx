@@ -30,7 +30,7 @@ const GRADE_INFO: Record<GradeZone, { emoji: string; en: string; ar: string; col
 };
 
 export default function LevelCompleteScreen() {
-  const { levelJustUnlocked, startNextLevel, dismissLevelComplete, selectedLevel, round } = useGame();
+  const { levelJustUnlocked, startNextLevel, dismissLevelComplete, restartRound, selectedLevel, round } = useGame();
   const { language, isRTL } = useLanguage();
   const { playFanfare, playStar } = useSoundEngine();
 
@@ -81,6 +81,7 @@ export default function LevelCompleteScreen() {
     : `🔓 ${unlockedInfo?.en ?? ""} Unlocked!`;
   const nextLevelLabel = isAr ? "المستوى التالي ←" : "Next Level →";
   const mainBoardLabel = isAr ? "اللوحة الرئيسية" : "Main Board";
+  const replayLabel    = isAr ? "🔄 العب مجدداً" : "🔄 Play Again";
 
   const starsEarned = round.starsEarned;
 
@@ -238,20 +239,20 @@ export default function LevelCompleteScreen() {
         <AnimatePresence>
           {buttonsVisible && (
             <motion.div
-              className="flex flex-col sm:flex-row gap-3 w-full"
+              className="flex flex-col gap-3 w-full"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, ease }}
             >
-              {/* Next Level — primary */}
+              {/* Next Level — primary (full width) */}
               <motion.button
                 onClick={startNextLevel}
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                className="flex-1 py-4 rounded-2xl font-bold"
+                className="w-full py-4 rounded-2xl font-bold"
                 style={{
                   fontFamily: displayFont,
-                  fontSize: "1.1rem",
+                  fontSize: "1.15rem",
                   background: "oklch(0.82 0.17 85)",
                   color: "oklch(0.18 0.04 270)",
                   border: "3px solid oklch(0.18 0.04 270)",
@@ -262,23 +263,44 @@ export default function LevelCompleteScreen() {
                 {nextLevelLabel}
               </motion.button>
 
-              {/* Main Board — secondary */}
-              <motion.button
-                onClick={dismissLevelComplete}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex-1 py-4 rounded-2xl font-bold"
-                style={{
-                  fontFamily: displayFont,
-                  fontSize: "1.05rem",
-                  background: "transparent",
-                  color: "oklch(0.82 0.04 270)",
-                  border: "2.5px solid oklch(0.45 0.04 270)",
-                  cursor: "pointer",
-                }}
-              >
-                {mainBoardLabel}
-              </motion.button>
+              {/* Play Again + Main Board — side by side */}
+              <div className="flex gap-3">
+                {/* Play Again — green secondary */}
+                <motion.button
+                  onClick={restartRound}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex-1 py-3.5 rounded-2xl font-bold"
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "1rem",
+                    background: "oklch(0.65 0.2 145 / 0.18)",
+                    color: "oklch(0.82 0.14 145)",
+                    border: "2.5px solid oklch(0.65 0.2 145 / 0.55)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {replayLabel}
+                </motion.button>
+
+                {/* Main Board — ghost */}
+                <motion.button
+                  onClick={dismissLevelComplete}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex-1 py-3.5 rounded-2xl font-bold"
+                  style={{
+                    fontFamily: displayFont,
+                    fontSize: "1rem",
+                    background: "transparent",
+                    color: "oklch(0.72 0.04 270)",
+                    border: "2.5px solid oklch(0.40 0.04 270)",
+                    cursor: "pointer",
+                  }}
+                >
+                  {mainBoardLabel}
+                </motion.button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
