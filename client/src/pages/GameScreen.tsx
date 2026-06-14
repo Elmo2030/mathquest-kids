@@ -7,17 +7,30 @@
  * context from reversing operator order (e.g. "3 + 5").
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
+import { useBadges } from "@/contexts/BadgeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSoundEngine } from "@/hooks/useSoundEngine";
 import MascotOwl from "@/components/MascotOwl";
 import FloatingDecorations from "@/components/FloatingDecorations";
 import LtrNum from "@/components/LtrNum";
+import MultipleChoiceFormat from "@/components/game-formats/MultipleChoiceFormat";
+import FillTheGapFormat from "@/components/game-formats/FillTheGapFormat";
+import BubblePopFormat from "@/components/game-formats/BubblePopFormat";
 import type { MoodType } from "@/components/MascotOwl";
-import type { Question, AnswerChoice } from "@/lib/mathEngine";
+import type { AnswerChoice, Question } from "@/lib/mathEngine";
 import { PASS_THRESHOLD } from "@/lib/mathEngine";
+
+/** Randomly pick a game format for this question — seeded by question id for stability */
+type GameFormat = "multiple_choice" | "fill_gap" | "bubble_pop";
+function pickFormat(questionId: string): GameFormat {
+  const seed = questionId.charCodeAt(questionId.length - 1) % 3;
+  if (seed === 0) return "multiple_choice";
+  if (seed === 1) return "fill_gap";
+  return "bubble_pop";
+}
 
 const LOGO_STAR =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/logo-star-VXHLUR84pLpFzMGbXzZvfX.webp";
@@ -299,19 +312,26 @@ export default function GameScreen() {
   const {
     goToLevels, selectedLevel, round, currentQuestion,
     answerQuestion, nextQuestion, activeSubLevelId, subLevelProgress,
+    streak, difficultyTier, fastAnswerCount, analytics, levels, isGradeMastered, allLevelsComplete,
   } = useGame();
+  const { checkUnlocks } = useBadges();
   const { t, isRTL } = useLanguage();
 
   const { playCorrect, playWrong, playClick } = useSoundEngine();
+  void playClick; // used by child components
 
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [mascotMood, setMascotMood] = useState<MoodType>("idle");
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const answerStartRef = useRef<number>(Date.now());
 
   const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
   const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
+
+  // Pick a stable format for this question
+  const gameFormat: GameFormat = currentQuestion ? pickFormat(currentQuestion.id) : "multiple_choice";
 
   // Feedback messages (language-aware)
   const CORRECT_MESSAGES = [
@@ -329,15 +349,35 @@ export default function GameScreen() {
     setMascotMood("idle");
     setFeedbackMsg(null);
     setIsAdvancing(false);
+    answerStartRef.current = Date.now();
   }, [round.currentIndex, round.questions]);
 
   const handleAnswer = useCallback(
-    (choice: AnswerChoice) => {
-      if (selectedChoiceId || isAdvancing) return;
+    (choiceId: string) => {
+      if (selectedChoiceId || isAdvancing || !currentQuestion) return;
+      const choice = currentQuestion.choices.find((c) => c.id === choiceId);
+      if (!choice) return;
+      const answerTimeMs = Date.now() - answerStartRef.current;
       setSelectedChoiceId(choice.id);
       const correct = choice.correct;
       setIsCorrect(correct);
       answerQuestion(choice.id);
+
+      // Badge unlock check after each answer
+      const newStreak = correct ? streak + 1 : 0;
+      const gradesMastered = ["KG", "G1", "G2", "G3"].filter((g) => isGradeMastered(g as "KG" | "G1" | "G2" | "G3"));
+      checkUnlocks({
+        totalCorrect: analytics.totalCorrectAnswers + (correct ? 1 : 0),
+        currentStreak: newStreak,
+        wrongStreak: correct ? 0 : -(streak < 0 ? Math.abs(streak) + 1 : 1),
+        answerTimeMs,
+        fastAnswersUnder3s: fastAnswerCount + (correct && answerTimeMs < 3000 ? 1 : 0),
+        gradesMastered,
+        allLevelsComplete,
+        roundCorrect: round.score + (correct ? 1 : 0),
+        roundTotal: round.questions.length,
+      });
+
       if (correct) {
         playCorrect();
         setMascotMood("celebrate");
@@ -354,15 +394,19 @@ export default function GameScreen() {
       }, 1600);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selectedChoiceId, isAdvancing, answerQuestion, nextQuestion]
+    [selectedChoiceId, isAdvancing, currentQuestion, answerQuestion, nextQuestion, streak, fastAnswerCount, analytics, isGradeMastered, allLevelsComplete, checkUnlocks, round]
   );
 
-  const getButtonState = (choice: AnswerChoice): ButtonState => {
+  const getButtonState = (choice: AnswerChoice): "idle" | "correct" | "wrong" | "reveal" => {
     if (!selectedChoiceId) return "idle";
     if (choice.id === selectedChoiceId) return choice.correct ? "correct" : "wrong";
     if (!isCorrect && choice.correct) return "reveal";
     return "idle";
   };
+
+  // Feedback state for new format components
+  const feedbackState: "idle" | "correct" | "wrong" =
+    !selectedChoiceId ? "idle" : isCorrect ? "correct" : "wrong";
 
   // Grade labels (translated)
   const levelLabels: Record<string, string> = {
@@ -539,27 +583,68 @@ export default function GameScreen() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Answer Buttons */}
+        {/* Streak chip — shows when streak ≥ 3 */}
+        {streak >= 3 && (
+          <motion.div
+            key={streak}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full self-center"
+            style={{
+              background: "oklch(0.62 0.22 25)",
+              border: "2.5px solid oklch(0.18 0.04 270)",
+              fontFamily: displayFont,
+              fontSize: "0.9rem",
+              color: "white",
+              boxShadow: "3px 3px 0 oklch(0.18 0.04 270)",
+            }}
+          >
+            🔥 <LtrNum>{streak}</LtrNum> {isRTL ? "متتالية" : "streak"}
+            {difficultyTier === "hard" && <span className="ms-1 text-xs opacity-80">{isRTL ? "⬆ صعب" : "⬆ hard"}</span>}
+            {difficultyTier === "easy" && <span className="ms-1 text-xs opacity-80">{isRTL ? "⬇ سهل" : "⬇ easy"}</span>}
+          </motion.div>
+        )}
+
+        {/* Answer Area — randomly pick format per question */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestion.id + "-choices"}
-            className="grid grid-cols-2 gap-3 w-full"
+            className="w-full"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 10, opacity: 0 }}
             transition={{ delay: 0.1, duration: 0.3, ease }}
           >
-            {currentQuestion.choices.map((choice, i) => (
-              <AnswerButton
-                key={choice.id}
-                choice={choice}
-                colorIndex={i}
-                state={getButtonState(choice)}
-                onClick={() => handleAnswer(choice)}
-                disabled={!!selectedChoiceId || isAdvancing}
+            {gameFormat === "fill_gap" ? (
+              <FillTheGapFormat
+                question={currentQuestion}
+                choices={currentQuestion.choices}
+                selectedId={selectedChoiceId}
+                feedbackState={feedbackState}
+                onSelect={handleAnswer}
+                displayFont={displayFont}
+                bodyFont={bodyFont}
                 isRTL={isRTL}
               />
-            ))}
+            ) : gameFormat === "bubble_pop" ? (
+              <BubblePopFormat
+                choices={currentQuestion.choices}
+                selectedId={selectedChoiceId}
+                feedbackState={feedbackState}
+                onSelect={handleAnswer}
+                displayFont={displayFont}
+                isRTL={isRTL}
+              />
+            ) : (
+              <MultipleChoiceFormat
+                choices={currentQuestion.choices}
+                selectedId={selectedChoiceId}
+                feedbackState={feedbackState}
+                onSelect={handleAnswer}
+                displayFont={displayFont}
+                isRTL={isRTL}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
       </main>

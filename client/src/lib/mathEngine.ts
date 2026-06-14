@@ -24,6 +24,32 @@ export const PASS_THRESHOLD = 5;
 /** Questions served per round (across all sub-levels) */
 export const QUESTIONS_PER_ROUND = 10;
 
+/**
+ * Adaptive difficulty tier.
+ * easy   → reduced number range (streak ≤ 0)
+ * normal → default range        (streak 1–2)
+ * hard   → extended range       (streak ≥ 3)
+ */
+export type DifficultyTier = "easy" | "normal" | "hard";
+
+/**
+ * Derive the current difficulty tier from the live streak.
+ * Streak ≥ 3 correct → bump up; ≥ 2 wrong in a row → drop down.
+ */
+export function getTierFromStreak(streak: number): DifficultyTier {
+  if (streak >= 3) return "hard";
+  if (streak <= -2) return "easy";
+  return "normal";
+}
+
+/**
+ * Generate a question for a sub-level at a specific difficulty tier.
+ * The tier widens or narrows the number range for arithmetic questions.
+ */
+export function generateAdaptiveQuestion(subLevelId: string, tier: DifficultyTier): Question {
+  return generateQuestionForSubLevelTiered(subLevelId, tier);
+}
+
 // ── Types ─────────────────────────────────────────────────────
 
 export type GradeLevel = "KG" | "G1" | "G2" | "G3";
@@ -580,6 +606,109 @@ function generateG3Fraction(): Question {
 }
 
 // ── Public API ────────────────────────────────────────────────
+
+/**
+ * Internal: generate a question with a specific difficulty tier.
+ * Arithmetic generators accept an optional tier to scale number ranges.
+ */
+function generateQuestionForSubLevelTiered(subLevelId: string, tier: DifficultyTier = "normal"): Question {
+  switch (subLevelId) {
+    case "KG-counting":      return generateKGCounting();      // KG has no tier scaling
+    case "KG-numbers":       return generateKGNumberId();
+    case "G1-addition":      return generateG1AdditionTiered(tier);
+    case "G1-subtraction":   return generateG1SubtractionTiered(tier);
+    case "G2-addition":      return generateG2AdditionTiered(tier);
+    case "G2-subtraction":   return generateG2SubtractionTiered(tier);
+    case "G2-multiplication":return generateG2MultiplicationTiered(tier);
+    case "G3-multiplication":return generateG3MultiplicationTiered(tier);
+    case "G3-division":      return generateG3DivisionTiered(tier);
+    case "G3-fractions":     return generateG3Fraction();
+    default:                 return generateG1AdditionTiered(tier);
+  }
+}
+
+function generateG1AdditionTiered(tier: DifficultyTier): Question {
+  const maxA = tier === "easy" ? 8 : tier === "hard" ? 18 : 15;
+  const maxB = tier === "easy" ? 5 : tier === "hard" ? 12 : 10;
+  const maxSum = tier === "easy" ? 12 : 20;
+  let a: number, b: number;
+  do { a = randomInt(1, maxA); b = randomInt(1, maxB); } while (a + b > maxSum);
+  const answer = a + b;
+  return { id: uid(), type: "addition_easy", subLevelId: "G1-addition", text: `What is ${a} + ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 1, maxSum)),
+    hint: randomItem(G1_ADD_HINTS), category: "Addition", categoryEmoji: "➕" };
+}
+
+function generateG1SubtractionTiered(tier: DifficultyTier): Question {
+  const maxA = tier === "easy" ? 10 : tier === "hard" ? 20 : 20;
+  const minA = tier === "easy" ? 2 : 2;
+  const a = randomInt(minA, maxA);
+  const b = randomInt(1, a);
+  const answer = a - b;
+  return { id: uid(), type: "subtraction_easy", subLevelId: "G1-subtraction", text: `What is ${a} − ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 0, maxA)),
+    hint: randomItem(G1_SUB_HINTS), category: "Subtraction", categoryEmoji: "➖" };
+}
+
+function generateG2AdditionTiered(tier: DifficultyTier): Question {
+  const minA = tier === "easy" ? 5 : 10;
+  const maxA = tier === "easy" ? 50 : tier === "hard" ? 90 : 80;
+  const a = randomInt(minA, maxA);
+  const b = randomInt(5, 100 - a);
+  const answer = a + b;
+  return { id: uid(), type: "addition_hard", subLevelId: "G2-addition", text: `What is ${a} + ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 1, 100, tier === "easy" ? 5 : 8)),
+    hint: randomItem(G2_ADD_HINTS), category: "Big Addition", categoryEmoji: "➕" };
+}
+
+function generateG2SubtractionTiered(tier: DifficultyTier): Question {
+  const minA = tier === "easy" ? 10 : 20;
+  const maxA = tier === "easy" ? 50 : tier === "hard" ? 100 : 90;
+  const a = randomInt(minA, maxA);
+  const b = randomInt(5, a - 1);
+  const answer = a - b;
+  return { id: uid(), type: "subtraction_hard", subLevelId: "G2-subtraction", text: `What is ${a} − ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 0, 99, tier === "easy" ? 5 : 8)),
+    hint: randomItem(G2_SUB_HINTS), category: "Big Subtraction", categoryEmoji: "➖" };
+}
+
+function generateG2MultiplicationTiered(tier: DifficultyTier): Question {
+  const multipliers = tier === "easy" ? [2, 5] : tier === "hard" ? [2, 3, 4, 5, 10] : [2, 5, 10];
+  const maxB = tier === "easy" ? 5 : tier === "hard" ? 12 : 10;
+  const a = randomItem(multipliers);
+  const b = randomInt(1, maxB);
+  const answer = a * b;
+  return { id: uid(), type: "multiplication_basic", subLevelId: "G2-multiplication", text: `What is ${a} × ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 0, 100, 10)),
+    hint: randomItem(G2_MULT_HINTS), category: "Times Tables", categoryEmoji: "✖️" };
+}
+
+function generateG3MultiplicationTiered(tier: DifficultyTier): Question {
+  const maxFactor = tier === "easy" ? 6 : tier === "hard" ? 12 : 10;
+  const a = randomInt(2, maxFactor);
+  const b = randomInt(2, maxFactor);
+  const answer = a * b;
+  return { id: uid(), type: "multiplication_full", subLevelId: "G3-multiplication", text: `What is ${a} × ${b}?`,
+    operandA: a, operandB: b, answer,
+    choices: buildChoices(answer, generateDistractors(answer, 3, 1, maxFactor * maxFactor, 12)),
+    hint: randomItem(G3_MULT_HINTS), category: "Times Tables", categoryEmoji: "✖️" };
+}
+
+function generateG3DivisionTiered(tier: DifficultyTier): Question {
+  const maxFactor = tier === "easy" ? 6 : tier === "hard" ? 12 : 10;
+  const b = randomInt(2, maxFactor);
+  const c = randomInt(2, maxFactor);
+  const a = b * c;
+  return { id: uid(), type: "division", subLevelId: "G3-division", text: `What is ${a} ÷ ${b}?`,
+    operandA: a, operandB: b, answer: c,
+    choices: buildChoices(c, generateDistractors(c, 3, 1, maxFactor, 3)),
+    hint: randomItem(G3_DIV_HINTS), category: "Division", categoryEmoji: "➗" };
+}
 
 /**
  * Generate a single question for a specific sub-level.

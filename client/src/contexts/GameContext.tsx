@@ -24,21 +24,23 @@ import React, {
   useRef,
 } from "react";
 import {
-  generateQuestionForSubLevel,
+  generateAdaptiveQuestion,
   generateRound,
   generateEndlessRound,
   validateAnswer,
   calculateStars,
   getSubLevels,
+  getTierFromStreak,
   PASS_THRESHOLD,
   QUESTIONS_PER_ROUND,
   type Question,
   type GradeLevel,
+  type DifficultyTier,
 } from "@/lib/mathEngine";
 
 // ── Screen & Level Types ──────────────────────────────────────
 
-export type Screen = "home" | "levels" | "game" | "summary" | "parents" | "victory" | "endless";
+export type Screen = "home" | "levels" | "game" | "summary" | "parents" | "victory" | "endless" | "trophy";
 export type GradeZone = "KG" | "G1" | "G2" | "G3";
 
 export interface LevelInfo {
@@ -199,7 +201,7 @@ function createRound(
 ): RoundState {
   const questions = focusedSubLevelId
     ? Array.from({ length: QUESTIONS_PER_ROUND }, () =>
-        generateQuestionForSubLevel(focusedSubLevelId)
+        generateAdaptiveQuestion(focusedSubLevelId, "normal")
       )
     : generateRound(level, QUESTIONS_PER_ROUND);
 
@@ -375,8 +377,18 @@ interface GameContextValue {
   // All levels complete
   allLevelsComplete: boolean;
 
+  // Adaptive difficulty
+  streak: number;
+  difficultyTier: DifficultyTier;
+
+  // Badge-related counters
+  fastAnswerCount: number;  // correct answers under 3 s
+
   // Progress reset
   resetProgress: () => void;
+
+  // Trophy Room
+  goToTrophy: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -415,6 +427,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [endlessScore, setEndlessScore] = useState<number>(() =>
     loadFromStorage<number>("mq_endless_score_v1", 0)
   );
+
+  // Adaptive difficulty & badge counters
+  const [streak, setStreak] = useState<number>(0);
+  const [fastAnswerCount, setFastAnswerCount] = useState<number>(0);
+  const answerStartTimeRef = useRef<number>(Date.now());
+
+  // Reset answer timer whenever a new question is shown
+  useEffect(() => {
+    answerStartTimeRef.current = Date.now();
+  }, [round.currentIndex]);
+
+  const difficultyTier: DifficultyTier = getTierFromStreak(streak);
 
   // Track playtime: record session start when entering game screen
   const sessionStartRef = useRef<number | null>(null);
@@ -457,6 +481,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const goToLevels = useCallback(() => setScreen("levels"), []);
+  const goToTrophy = useCallback(() => setScreen("trophy"), []);
 
   // ── Derived: all levels complete ────────────────────────────
   const allLevelsComplete = levels.every((l) => l.stars >= 1) &&
@@ -512,8 +537,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // ── Answer Handling ─────────────────────────────────────────
 
   const answerQuestion = useCallback((choiceId: string) => {
+    const elapsed = Date.now() - answerStartTimeRef.current;
     dispatch({ type: "ANSWER", choiceId });
-  }, []);
+    // Update streak & fast-answer counter after dispatch
+    // We need to check correctness here directly
+    const question = round.questions[round.currentIndex];
+    if (!question) return;
+    const correct = validateAnswer(question, choiceId);
+    setStreak((prev) => correct ? prev + 1 : (prev > 0 ? 0 : prev - 1));
+    if (correct && elapsed < 3000) {
+      setFastAnswerCount((prev) => prev + 1);
+    }
+  }, [round.questions, round.currentIndex]);
 
   // Called after the feedback animation completes
   const nextQuestion = useCallback(() => {
@@ -668,7 +703,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         endlessScore,
         startEndlessMode,
         allLevelsComplete,
+        streak,
+        difficultyTier,
+        fastAnswerCount,
         resetProgress,
+        goToTrophy,
       }}
     >
       {children}

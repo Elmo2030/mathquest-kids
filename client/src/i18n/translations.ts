@@ -155,6 +155,27 @@ export interface Translations {
 
   // ── Focus badge ───────────────────────────────────────────
   focusBadge: string;
+
+  // ── Trophy Room ───────────────────────────────────────────
+  trophyRoom: string;
+  trophyRoomSubtitle: string;
+  trophyUnlocked: string;
+  trophyLocked: string;
+  trophyProgress: string;
+  trophyRarityBronze: string;
+  trophyRaritySilver: string;
+  trophyRarityGold: string;
+  trophyRarityPlatinum: string;
+  trophyBadgeUnlocked: string;
+
+  // ── Game formats ──────────────────────────────────────────
+  formatFillGapPrompt: string;
+  formatBubblePopPrompt: string;
+
+  // ── Adaptive difficulty ───────────────────────────────────
+  streakLabel: string;
+  diffHard: string;
+  diffEasy: string;
 }
 
 // ── English ───────────────────────────────────────────────────
@@ -289,6 +310,24 @@ export const en: Translations = {
   tableResult: "✓/✗",
 
   focusBadge: "⚠️ Focus",
+
+  trophyRoom: "🏆 Trophy Room",
+  trophyRoomSubtitle: "Your badges and achievements",
+  trophyUnlocked: "Unlocked",
+  trophyLocked: "Locked",
+  trophyProgress: "badges unlocked",
+  trophyRarityBronze: "Bronze",
+  trophyRaritySilver: "Silver",
+  trophyRarityGold: "Gold",
+  trophyRarityPlatinum: "Platinum",
+  trophyBadgeUnlocked: "Badge Unlocked!",
+
+  formatFillGapPrompt: "Pick the missing number:",
+  formatBubblePopPrompt: "Pop the correct bubble! 🫧",
+
+  streakLabel: "streak",
+  diffHard: "↑ hard",
+  diffEasy: "↓ easy",
 };
 
 // ── Arabic ────────────────────────────────────────────────────
@@ -423,6 +462,24 @@ export const ar: Translations = {
   tableResult: "✓/✗",
 
   focusBadge: "⚠️ تركيز",
+
+  trophyRoom: "🏆 غرفة الكؤوس",
+  trophyRoomSubtitle: "شاراتك وإنجازاتك",
+  trophyUnlocked: "مفتوحة",
+  trophyLocked: "مقفلة",
+  trophyProgress: "شارات مفتوحة",
+  trophyRarityBronze: "برونزي",
+  trophyRaritySilver: "فضي",
+  trophyRarityGold: "ذهبي",
+  trophyRarityPlatinum: "بلاتيني",
+  trophyBadgeUnlocked: "شارة جديدة!",
+
+  formatFillGapPrompt: "اختر الرقم الناقص:",
+  formatBubblePopPrompt: "افقع الفقاعة الصحيحة! 🫧",
+
+  streakLabel: "متتالية",
+  diffHard: "↑ صعب",
+  diffEasy: "↓ سهل",
 };
 
 export const translations: Record<Language, Translations> = { en, ar };

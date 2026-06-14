@@ -18,6 +18,8 @@ import ParentsScreen from "./pages/ParentsScreen";
 import SummaryScreen from "./pages/SummaryScreen";
 import VictoryScreen from "./pages/VictoryScreen";
 import EndlessScreen from "./pages/EndlessScreen";
+import TrophyRoomScreen from "./pages/TrophyRoomScreen";
+import { BadgeProvider } from "./contexts/BadgeContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const pageVariants = {
@@ -45,6 +47,7 @@ function GameRouter() {
         {screen === "summary"  && <SummaryScreen />}
         {screen === "victory"  && <VictoryScreen />}
         {screen === "endless"  && <EndlessScreen />}
+        {screen === "trophy"   && <TrophyRoomScreen />}
       </motion.div>
     </AnimatePresence>
   );
@@ -57,8 +60,10 @@ export default function App() {
         <TooltipProvider>
           <LanguageProvider>
             <GameProvider>
-              <Toaster />
-              <GameRouter />
+              <BadgeProvider>
+                <Toaster />
+                <GameRouter />
+              </BadgeProvider>
             </GameProvider>
           </LanguageProvider>
         </TooltipProvider>
