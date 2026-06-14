@@ -25,7 +25,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { translations, type Language, type Translations } from "@/i18n/translations";
+import { translations, en, type Language, type Translations } from "@/i18n/translations";
 
 const LS_LANG_KEY = "mq_language_v1";
 
@@ -83,8 +83,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Safe fallback — returns English defaults if somehow called outside provider
+const FALLBACK: LanguageContextValue = {
+  language: "en",
+  setLanguage: () => {},
+  t: (key: keyof Translations) => en[key],
+  isRTL: false,
+  dir: "ltr",
+};
+
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
-  return ctx;
+  // Return safe defaults instead of throwing so the app never crashes
+  return ctx ?? FALLBACK;
 }
