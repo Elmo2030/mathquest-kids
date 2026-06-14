@@ -2,8 +2,9 @@
  * GameContext — MathQuest Kids
  * ─────────────────────────────────────────────────────────────
  * Global state for navigation, game rounds, score, lives,
- * star tracking, sub-level progression, and per-operation
- * answer history. Persisted to localStorage.
+ * star tracking, sub-level progression, per-operation
+ * answer history, playtime tracking, and progress reset.
+ * All persistent state is saved to localStorage.
  *
  * Sub-level Progression:
  *   Each grade has named sub-levels (operations).
@@ -20,6 +21,7 @@ import React, {
   useCallback,
   useReducer,
   useEffect,
+  useRef,
 } from "react";
 import {
   generateQuestionForSubLevel,
@@ -31,7 +33,6 @@ import {
   QUESTIONS_PER_ROUND,
   type Question,
   type GradeLevel,
-  type SubLevel,
 } from "@/lib/mathEngine";
 
 // ── Screen & Level Types ──────────────────────────────────────
@@ -134,6 +135,18 @@ export interface AnswerHistoryEntry {
   questionType: string;
   correct: boolean;
   questionText: string;
+}
+
+/** Persistent analytics state */
+export interface AnalyticsState {
+  /** Total play time in seconds */
+  totalPlaySeconds: number;
+  /** Total questions answered across all sessions */
+  totalQuestionsAnswered: number;
+  /** Total correct answers across all sessions */
+  totalCorrectAnswers: number;
+  /** Session start timestamp (null when not in game) */
+  sessionStartedAt: number | null;
 }
 
 function buildInitialSubLevelProgress(): SubLevelProgress[] {
@@ -271,9 +284,10 @@ function roundReducer(state: RoundState, action: RoundAction): RoundState {
 
 // ── localStorage helpers ──────────────────────────────────────
 
-const LS_LEVELS_KEY = "mq_levels_v2";
-const LS_SUBLEVEL_KEY = "mq_sublevel_progress_v2";
-const LS_HISTORY_KEY = "mq_answer_history_v2";
+const LS_LEVELS_KEY    = "mq_levels_v2";
+const LS_SUBLEVEL_KEY  = "mq_sublevel_progress_v2";
+const LS_HISTORY_KEY   = "mq_answer_history_v2";
+const LS_ANALYTICS_KEY = "mq_analytics_v1";
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
@@ -292,6 +306,13 @@ function saveToStorage<T>(key: string, value: T): void {
     // Storage full or unavailable — silently ignore
   }
 }
+
+const INITIAL_ANALYTICS: AnalyticsState = {
+  totalPlaySeconds: 0,
+  totalQuestionsAnswered: 0,
+  totalCorrectAnswers: 0,
+  sessionStartedAt: null,
+};
 
 // ── Context Value ─────────────────────────────────────────────
 
@@ -317,6 +338,9 @@ interface GameContextValue {
   // Answer history (for Parents Dashboard)
   answerHistory: AnswerHistoryEntry[];
 
+  // Analytics
+  analytics: AnalyticsState;
+
   // Round state
   round: RoundState;
   currentQuestion: Question | null;
@@ -326,6 +350,9 @@ interface GameContextValue {
 
   // Derived helpers
   totalStarsEarned: number;
+
+  // Progress reset
+  resetProgress: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -345,7 +372,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     () => {
       const stored = loadFromStorage<SubLevelProgress[]>(LS_SUBLEVEL_KEY, []);
       const initial = buildInitialSubLevelProgress();
-      // Merge stored values into initial (handles new sub-levels added later)
       return initial.map((init) => {
         const found = stored.find((s) => s.subLevelId === init.subLevelId);
         return found ? { ...init, ...found } : init;
@@ -357,15 +383,38 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     loadFromStorage(LS_HISTORY_KEY, [])
   );
 
+  const [analytics, setAnalytics] = useState<AnalyticsState>(() =>
+    loadFromStorage(LS_ANALYTICS_KEY, INITIAL_ANALYTICS)
+  );
+
   const [round, dispatch] = useReducer(roundReducer, createRound("KG"));
+
+  // Track playtime: record session start when entering game screen
+  const sessionStartRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (screen === "game") {
+      sessionStartRef.current = Date.now();
+    } else if (sessionStartRef.current !== null) {
+      // Session ended — accumulate elapsed seconds
+      const elapsed = Math.round((Date.now() - sessionStartRef.current) / 1000);
+      sessionStartRef.current = null;
+      if (elapsed > 0) {
+        setAnalytics((prev) => ({
+          ...prev,
+          totalPlaySeconds: prev.totalPlaySeconds + elapsed,
+        }));
+      }
+    }
+  }, [screen]);
 
   // Persist to localStorage whenever state changes
   useEffect(() => { saveToStorage(LS_LEVELS_KEY, levels); }, [levels]);
   useEffect(() => { saveToStorage(LS_SUBLEVEL_KEY, subLevelProgress); }, [subLevelProgress]);
   useEffect(() => {
-    // Keep only the last 200 history entries
     saveToStorage(LS_HISTORY_KEY, answerHistory.slice(-200));
   }, [answerHistory]);
+  useEffect(() => { saveToStorage(LS_ANALYTICS_KEY, analytics); }, [analytics]);
 
   // ── Navigation ──────────────────────────────────────────────
 
@@ -418,12 +467,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // ── Answer Handling ─────────────────────────────────────────
 
-  const answerQuestion = useCallback(
-    (choiceId: string) => {
-      dispatch({ type: "ANSWER", choiceId });
-    },
-    []
-  );
+  const answerQuestion = useCallback((choiceId: string) => {
+    dispatch({ type: "ANSWER", choiceId });
+  }, []);
 
   // Called after the feedback animation completes
   const nextQuestion = useCallback(() => {
@@ -472,7 +518,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       });
       setAnswerHistory((prev) => [...prev, ...newEntries]);
 
-      // 3. Update level stars and games played
+      // 3. Update analytics totals
+      const roundCorrect = round.results.filter((r) => r.correct).length;
+      setAnalytics((prev) => ({
+        ...prev,
+        totalQuestionsAnswered: prev.totalQuestionsAnswered + round.results.length,
+        totalCorrectAnswers: prev.totalCorrectAnswers + roundCorrect,
+      }));
+
+      // 4. Update level stars and games played
       setLevels((prev) =>
         prev.map((l) => {
           if (l.id !== selectedLevel) return l;
@@ -481,8 +535,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         })
       );
 
-      // 4. Unlock next grade if current grade is mastered (all sub-levels passed)
-      //    OR if earned ≥1 star (original unlock logic preserved)
+      // 5. Unlock next grade if earned ≥1 star
       if (round.starsEarned >= 1) {
         setLevels((prev) => {
           const idx = prev.findIndex((l) => l.id === selectedLevel);
@@ -509,6 +562,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setScreen("game");
   }, [selectedLevel, activeSubLevelId]);
 
+  // ── Reset Progress ──────────────────────────────────────────
+
+  const resetProgress = useCallback(() => {
+    setLevels(INITIAL_LEVELS);
+    setSubLevelProgress(buildInitialSubLevelProgress());
+    setAnswerHistory([]);
+    setAnalytics(INITIAL_ANALYTICS);
+    // Clear all localStorage keys
+    [LS_LEVELS_KEY, LS_SUBLEVEL_KEY, LS_HISTORY_KEY, LS_ANALYTICS_KEY].forEach(
+      (key) => {
+        try { localStorage.removeItem(key); } catch { /* ignore */ }
+      }
+    );
+    setScreen("home");
+  }, []);
+
   // ── Derived ─────────────────────────────────────────────────
 
   const currentQuestion = round.questions[round.currentIndex] ?? null;
@@ -530,12 +599,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         isSubLevelPassed,
         isGradeMastered,
         answerHistory,
+        analytics,
         round,
         currentQuestion,
         answerQuestion,
         nextQuestion,
         restartRound,
         totalStarsEarned,
+        resetProgress,
       }}
     >
       {children}
