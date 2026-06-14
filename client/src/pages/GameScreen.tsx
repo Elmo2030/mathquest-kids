@@ -11,6 +11,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSoundEngine } from "@/hooks/useSoundEngine";
 import MascotOwl from "@/components/MascotOwl";
 import FloatingDecorations from "@/components/FloatingDecorations";
 import LtrNum from "@/components/LtrNum";
@@ -301,6 +302,8 @@ export default function GameScreen() {
   } = useGame();
   const { t, isRTL } = useLanguage();
 
+  const { playCorrect, playWrong, playClick } = useSoundEngine();
+
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [mascotMood, setMascotMood] = useState<MoodType>("idle");
@@ -336,9 +339,11 @@ export default function GameScreen() {
       setIsCorrect(correct);
       answerQuestion(choice.id);
       if (correct) {
+        playCorrect();
         setMascotMood("celebrate");
         setFeedbackMsg(randomItem(CORRECT_MESSAGES));
       } else {
+        playWrong();
         setMascotMood("oops");
         setFeedbackMsg(randomItem(WRONG_MESSAGES));
       }

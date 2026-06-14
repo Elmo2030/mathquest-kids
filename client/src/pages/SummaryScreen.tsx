@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSoundEngine } from "@/hooks/useSoundEngine";
 import MascotOwl from "@/components/MascotOwl";
 import LtrNum from "@/components/LtrNum";
 import type { MoodType } from "@/components/MascotOwl";
@@ -112,6 +113,7 @@ function ResultRow({
 export default function SummaryScreen() {
   const { round, selectedLevel, goToLevels, restartRound, levels } = useGame();
   const { t, isRTL } = useLanguage();
+  const { playFanfare, playStar } = useSoundEngine();
   const [showConfetti, setShowConfetti] = useState(false);
 
   const stars = round.starsEarned;
@@ -132,6 +134,16 @@ export default function SummaryScreen() {
   const msg = STAR_MESSAGES[stars];
 
   const levelInfo = levels.find((l) => l.id === selectedLevel);
+
+  // Play fanfare on mount (round complete)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (stars >= 2) playFanfare();
+      else if (stars === 1) playStar();
+    }, 500);
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (stars === 3) {
