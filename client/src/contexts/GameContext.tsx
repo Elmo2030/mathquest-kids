@@ -40,7 +40,7 @@ import {
 
 // ── Screen & Level Types ──────────────────────────────────────
 
-export type Screen = "home" | "levels" | "game" | "summary" | "parents" | "victory" | "endless" | "trophy";
+export type Screen = "home" | "levels" | "game" | "summary" | "parents" | "victory" | "endless" | "trophy" | "levelcomplete";
 export type GradeZone = "KG" | "G1" | "G2" | "G3";
 
 export interface LevelInfo {
@@ -389,6 +389,11 @@ interface GameContextValue {
 
   // Trophy Room
   goToTrophy: () => void;
+
+  // Level completion flow
+  levelJustUnlocked: GradeZone | null;  // grade that was just unlocked after finishing a level
+  startNextLevel: () => void;           // start the first round of the newly unlocked grade
+  dismissLevelComplete: () => void;     // go to level select without starting next level
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -424,6 +429,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   );
 
   const [round, dispatch] = useReducer(roundReducer, createRound("KG"));
+  const [levelJustUnlocked, setLevelJustUnlocked] = useState<GradeZone | null>(null);
   const [endlessScore, setEndlessScore] = useState<number>(() =>
     loadFromStorage<number>("mq_endless_score_v1", 0)
   );
@@ -614,11 +620,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         })
       );
 
-      // 5. Unlock next grade if earned ≥1 star
+      // 5. Unlock next grade if earned ≥1 star and track which grade was just unlocked
+      let justUnlockedGrade: GradeZone | null = null;
       if (round.starsEarned >= 1) {
         setLevels((prev) => {
           const idx = prev.findIndex((l) => l.id === selectedLevel);
           if (idx < 0 || idx >= prev.length - 1) return prev;
+          const nextLevel = prev[idx + 1];
+          if (!nextLevel.unlocked) {
+            justUnlockedGrade = nextLevel.id;
+          }
           return prev.map((l, i) =>
             i === idx + 1 ? { ...l, unlocked: true } : l
           );
@@ -638,11 +649,36 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         selectedLevel === "G3" &&
         updatedSubLevels.every((s) => s.passed);
 
-      setScreen(allNowComplete ? "victory" : "summary");
+      if (allNowComplete) {
+        setScreen("victory");
+      } else if (justUnlockedGrade) {
+        // A new grade was just unlocked — show the Level Complete celebration
+        setLevelJustUnlocked(justUnlockedGrade);
+        setScreen("levelcomplete");
+      } else {
+        setScreen("summary");
+      }
     } else {
       dispatch({ type: "NEXT_QUESTION" });
     }
   }, [round, selectedLevel, subLevelProgress]);
+
+  // ── Level Complete flow ────────────────────────────────────
+
+  const startNextLevel = useCallback(() => {
+    if (!levelJustUnlocked) return;
+    const nextGrade = levelJustUnlocked;
+    setLevelJustUnlocked(null);
+    setSelectedLevel(nextGrade);
+    setActiveSubLevelId(null);
+    dispatch({ type: "RESET", level: nextGrade as GradeLevel, focusedSubLevelId: null });
+    setScreen("game");
+  }, [levelJustUnlocked]);
+
+  const dismissLevelComplete = useCallback(() => {
+    setLevelJustUnlocked(null);
+    setScreen("levels");
+  }, []);
 
   const restartRound = useCallback(() => {
     if (!selectedLevel) return;
@@ -708,6 +744,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         fastAnswerCount,
         resetProgress,
         goToTrophy,
+        levelJustUnlocked,
+        startNextLevel,
+        dismissLevelComplete,
       }}
     >
       {children}

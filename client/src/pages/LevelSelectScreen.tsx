@@ -87,15 +87,48 @@ function LevelCard({
       variants={cardVariants}
       className="relative rounded-3xl overflow-hidden"
       style={{
-        border: "3px solid oklch(0.18 0.04 270)",
+        border: level.unlocked
+          ? "3px solid oklch(0.18 0.04 270)"
+          : "3px solid oklch(0.45 0.02 270 / 0.5)",
         boxShadow: level.unlocked
           ? isRTL ? "-6px 6px 0px oklch(0.18 0.04 270)" : "6px 6px 0px oklch(0.18 0.04 270)"
-          : isRTL ? "-3px 3px 0px oklch(0.18 0.04 270)" : "3px 3px 0px oklch(0.18 0.04 270)",
-        opacity: level.unlocked ? 1 : 0.75,
+          : "none",
+        opacity: level.unlocked ? 1 : 1,
+        filter: level.unlocked ? "none" : "saturate(0.15) brightness(0.7)",
       }}
-      whileHover={level.unlocked ? { y: -3 } : {}}
+      whileHover={level.unlocked ? { y: -3 } : { scale: 1.01 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
+      {/* Locked overlay */}
+      {!level.unlocked && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl"
+          style={{
+            background: "oklch(0.08 0.02 270 / 0.55)",
+            backdropFilter: "blur(1.5px)",
+            pointerEvents: "none",
+          }}
+        >
+          <motion.div
+            animate={{ y: [-3, 3, -3] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            style={{ fontSize: "2.8rem", filter: "drop-shadow(0 2px 8px oklch(0 0 0 / 0.5))" }}
+          >
+            🔒
+          </motion.div>
+          <span
+            style={{
+              fontFamily: isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', cursive",
+              fontSize: "0.85rem",
+              color: "oklch(0.75 0.04 270)",
+              marginTop: "0.4rem",
+              fontWeight: 700,
+            }}
+          >
+            {t("locked")}
+          </span>
+        </div>
+      )}
       {/* Card header */}
       <button
         className="w-full text-start"
@@ -153,7 +186,7 @@ function LevelCard({
                 </motion.span>
               </>
             ) : (
-              <span className="text-3xl" aria-label={t("locked")}>🔒</span>
+              <span className="text-2xl opacity-0" aria-hidden="true">🔒</span>
             )}
           </div>
         </div>

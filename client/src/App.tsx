@@ -19,6 +19,7 @@ import SummaryScreen from "./pages/SummaryScreen";
 import VictoryScreen from "./pages/VictoryScreen";
 import EndlessScreen from "./pages/EndlessScreen";
 import TrophyRoomScreen from "./pages/TrophyRoomScreen";
+import LevelCompleteScreen from "./pages/LevelCompleteScreen";
 import { BadgeProvider } from "./contexts/BadgeContext";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -47,7 +48,8 @@ function GameRouter() {
         {screen === "summary"  && <SummaryScreen />}
         {screen === "victory"  && <VictoryScreen />}
         {screen === "endless"  && <EndlessScreen />}
-        {screen === "trophy"   && <TrophyRoomScreen />}
+        {screen === "trophy"        && <TrophyRoomScreen />}
+        {screen === "levelcomplete" && <LevelCompleteScreen />}
       </motion.div>
     </AnimatePresence>
   );
