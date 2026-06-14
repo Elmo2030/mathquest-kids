@@ -14,6 +14,7 @@ import HomeScreen from "./pages/HomeScreen";
 import LevelSelectScreen from "./pages/LevelSelectScreen";
 import GameScreen from "./pages/GameScreen";
 import ParentsScreen from "./pages/ParentsScreen";
+import SummaryScreen from "./pages/SummaryScreen";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const pageVariants = {
@@ -38,6 +39,7 @@ function GameRouter() {
         {screen === "levels"  && <LevelSelectScreen />}
         {screen === "game"    && <GameScreen />}
         {screen === "parents" && <ParentsScreen />}
+        {screen === "summary"  && <SummaryScreen />}
       </motion.div>
     </AnimatePresence>
   );

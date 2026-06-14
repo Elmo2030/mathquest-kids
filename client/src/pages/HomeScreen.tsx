@@ -29,7 +29,7 @@ const itemVariants = {
 };
 
 export default function HomeScreen() {
-  const { goToLevels, navigateTo } = useGame();
+  const { goToLevels, navigateTo, totalStarsEarned } = useGame();
 
   return (
     <div
@@ -170,7 +170,7 @@ export default function HomeScreen() {
                 color: "oklch(0.18 0.04 270)",
               }}
             >
-              3 Stars Earned Today!
+              {totalStarsEarned} Stars Earned!
             </span>
             <span className="text-2xl">⭐</span>
           </motion.div>

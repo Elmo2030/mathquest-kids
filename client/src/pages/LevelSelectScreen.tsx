@@ -1,7 +1,7 @@
 /**
  * LevelSelectScreen — MathQuest Kids
  * Design: Sunny Storybook
- * Layout: Storybook map background, four grade zone cards in a 2x2 grid,
+ * Layout: Storybook map background, four grade zone cards in a 2×2 grid,
  *         each showing lock/unlock state, star rating, and a "Play" button.
  */
 
@@ -59,12 +59,11 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
       className="relative rounded-3xl overflow-hidden"
       style={{
         border: "3px solid oklch(0.18 0.04 270)",
-        boxShadow: `6px 6px 0px oklch(0.18 0.04 270)`,
+        boxShadow: "6px 6px 0px oklch(0.18 0.04 270)",
       }}
       whileHover={level.unlocked ? { y: -4, boxShadow: "8px 10px 0px oklch(0.18 0.04 270)" } : {}}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      {/* Card background */}
       <div
         className="p-5 md:p-6 flex flex-col gap-3"
         style={{ backgroundColor: level.bgColor }}
@@ -77,7 +76,7 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
               className="text-xl md:text-2xl leading-tight"
               style={{
                 fontFamily: "'Fredoka One', sans-serif",
-                color: level.color,
+                color: level.textColor,
                 textShadow: level.unlocked ? "1px 2px 0 oklch(0.18 0.04 270 / 0.25)" : "none",
               }}
             >
@@ -88,7 +87,7 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
               style={{
                 fontFamily: "'Nunito', sans-serif",
                 fontWeight: 700,
-                color: level.color === "white"
+                color: level.textColor === "white"
                   ? "oklch(0.95 0 0 / 0.85)"
                   : "oklch(0.28 0.04 270)",
               }}
@@ -99,7 +98,7 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
 
           {/* Zone number badge */}
           <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-black"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-black shrink-0"
             style={{
               background: "oklch(0.99 0.015 85)",
               border: "2.5px solid oklch(0.18 0.04 270)",
@@ -111,10 +110,10 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
           </div>
         </div>
 
-        {/* Stars */}
+        {/* Stars + badge */}
         <div className="flex items-center justify-between">
           <StarRating stars={level.stars} total={level.totalStars} />
-          {level.unlocked && (
+          {level.unlocked && level.gamesPlayed > 0 && (
             <span
               className="text-xs px-2 py-0.5 rounded-full"
               style={{
@@ -126,6 +125,20 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
               }}
             >
               {level.stars}/{level.totalStars} ⭐
+            </span>
+          )}
+          {level.unlocked && level.gamesPlayed === 0 && (
+            <span
+              className="text-xs px-2 py-0.5 rounded-full"
+              style={{
+                background: "oklch(0.65 0.2 145 / 0.9)",
+                border: "1.5px solid oklch(0.18 0.04 270)",
+                fontFamily: "'Nunito', sans-serif",
+                fontWeight: 800,
+                color: "white",
+              }}
+            >
+              NEW!
             </span>
           )}
         </div>
@@ -145,7 +158,7 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
             whileTap={{ scale: 0.96 }}
             aria-label={`Play ${level.label}`}
           >
-            🎮 Let's Play!
+            🎮 {level.gamesPlayed > 0 ? "Play Again!" : "Let's Play!"}
           </motion.button>
         ) : (
           <div
@@ -154,7 +167,9 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
               background: "oklch(0.18 0.04 270 / 0.25)",
               border: "3px solid oklch(0.18 0.04 270 / 0.4)",
               fontFamily: "'Fredoka One', sans-serif",
-              color: level.color === "white" ? "oklch(0.95 0 0 / 0.6)" : "oklch(0.18 0.04 270 / 0.5)",
+              color: level.textColor === "white"
+                ? "oklch(0.95 0 0 / 0.6)"
+                : "oklch(0.18 0.04 270 / 0.5)",
             }}
             aria-label={`${level.label} is locked`}
           >
@@ -179,7 +194,8 @@ function LevelCard({ level, index }: { level: LevelInfo; index: number }) {
 }
 
 export default function LevelSelectScreen() {
-  const { goHome, levels } = useGame();
+  const { goHome, levels, totalStarsEarned } = useGame();
+  const totalPossible = levels.reduce((s, l) => s + l.totalStars, 0);
 
   return (
     <div
@@ -228,7 +244,6 @@ export default function LevelSelectScreen() {
           </span>
         </div>
 
-        {/* Mascot small */}
         <MascotOwl mood="idle" size="sm" />
       </motion.header>
 
@@ -300,18 +315,23 @@ export default function LevelSelectScreen() {
             </span>
             <div className="flex items-center gap-3 flex-1 mx-4">
               <div className="progress-track flex-1">
-                <div className="progress-fill" style={{ width: "25%" }} />
+                <div
+                  className="progress-fill"
+                  style={{
+                    width: `${Math.round((totalStarsEarned / totalPossible) * 100)}%`,
+                  }}
+                />
               </div>
               <span
                 style={{
                   fontFamily: "'Fredoka One', sans-serif",
                   fontSize: "0.95rem",
                   color: "oklch(0.18 0.04 270)",
-                  minWidth: "3rem",
+                  minWidth: "4rem",
                   textAlign: "right",
                 }}
               >
-                3 / 12 ⭐
+                {totalStarsEarned} / {totalPossible} ⭐
               </span>
             </div>
           </div>
