@@ -396,10 +396,6 @@ export default function GameScreen() {
       setTimeout(() => {
         setMascotMood("idle");
         setIsAdvancing(true);
-        // Use ref so we always call the latest nextQuestion, never a stale closure.
-        // This is critical for the last question: by the time this fires, React has
-        // already re-rendered with round.isComplete = true, and nextQuestionRef.current
-        // points to the updated callback that will trigger the level-complete flow.
         setTimeout(() => nextQuestionRef.current(), 200);
       }, 1600);
     },
