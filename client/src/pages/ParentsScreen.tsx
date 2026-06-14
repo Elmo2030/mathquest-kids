@@ -11,6 +11,7 @@ import { useGame, type GradeZone } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LtrNum from "@/components/LtrNum";
 import LanguageToggle from "@/components/LanguageToggle";
+import BrandingFooter from "@/components/BrandingFooter";
 import { toast } from "sonner";
 
 const LOGO_STAR =
@@ -561,6 +562,9 @@ export default function ParentsScreen() {
           </motion.div>
         </main>
       </div>
+
+      {/* Branding Footer */}
+      <BrandingFooter />
 
       {/* Reset dialog */}
       <AnimatePresence>

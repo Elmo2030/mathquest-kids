@@ -14,6 +14,7 @@ import FloatingDecorations from "@/components/FloatingDecorations";
 import MathGate from "@/components/MathGate";
 import LanguageToggle from "@/components/LanguageToggle";
 import LtrNum from "@/components/LtrNum";
+import BrandingFooter from "@/components/BrandingFooter";
 
 const HERO_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/hero-bg-NGHvceSnJXhQwUn4AGvBuA.webp";
@@ -184,6 +185,9 @@ export default function HomeScreen() {
           </svg>
         </div>
       </div>
+
+      {/* Branding Footer */}
+      <BrandingFooter />
 
       {/* Math Gate */}
       <AnimatePresence>
