@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -203,7 +204,76 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+const pwaPlugin = VitePWA({
+  registerType: "autoUpdate",
+  // Service worker lives in client/public so Vite can pick it up
+  outDir: path.resolve(import.meta.dirname, "dist/public"),
+  // Inline the service worker into the build
+  injectRegister: "auto",
+  workbox: {
+    // Cache everything in the build output
+    globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2,ttf,json}"],
+    // Cache Google Fonts
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "google-fonts-cache",
+          expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      },
+      {
+        urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+        handler: "CacheFirst",
+        options: {
+          cacheName: "gstatic-fonts-cache",
+          expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          cacheableResponse: { statuses: [0, 200] },
+        },
+      },
+    ],
+    // Skip waiting so updates apply immediately
+    skipWaiting: true,
+    clientsClaim: true,
+  },
+  manifest: {
+    name: "Math Genius by Faras | عبقري الرياضيات",
+    short_name: "MathGenius",
+    description: "An interactive math learning game for kids from Kindergarten to Grade 3, by Faras Academy.",
+    theme_color: "#FBBF24",
+    background_color: "#FEF9C3",
+    display: "standalone",
+    orientation: "portrait",
+    scope: "/",
+    start_url: "/",
+    lang: "en",
+    icons: [
+      {
+        src: "/icons/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any maskable",
+      },
+      {
+        src: "/icons/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any maskable",
+      },
+    ],
+    categories: ["education", "games", "kids"],
+    screenshots: [],
+  },
+  devOptions: {
+    // Enable service worker in dev so we can test offline
+    enabled: false, // keep off in dev to avoid HMR conflicts
+    type: "module",
+  },
+});
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy(), pwaPlugin];
 
 export default defineConfig({
   plugins,

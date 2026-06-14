@@ -16,6 +16,7 @@ import MathGate from "@/components/MathGate";
 import LanguageToggle from "@/components/LanguageToggle";
 import LtrNum from "@/components/LtrNum";
 import BrandingFooter from "@/components/BrandingFooter";
+import { usePWA } from "@/hooks/usePWA";
 
 const HERO_BG =
   "https://d2xsxph8kpxj0f.cloudfront.net/310419663029442648/HuT9LUnwcUFmp6Xsie23M7/hero-bg-NGHvceSnJXhQwUn4AGvBuA.webp";
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   const { openPractice } = useMultPractice();
   const { t, isRTL } = useLanguage();
   const [showGate, setShowGate] = useState(false);
+  const { isInstallable, promptInstall } = usePWA();
 
   const handleParentsDashboard = () => setShowGate(true);
   const handleGateSuccess = () => { setShowGate(false); navigateTo("parents"); };
@@ -196,6 +198,30 @@ export default function HomeScreen() {
                 ⚡ {t("multPractice")}
               </motion.button>
             </motion.div>
+
+            {/* Install App — only shown when browser install prompt is available */}
+            {isInstallable && (
+              <motion.div variants={itemVariants}>
+                <motion.button
+                  className="btn-ink w-full sm:w-auto text-base px-6 py-3"
+                  style={{
+                    fontFamily: displayFont,
+                    background: "oklch(0.52 0.18 145)",
+                    border: "3px solid oklch(0.18 0.04 270)",
+                    boxShadow: `${isRTL ? "-4px" : "4px"} 4px 0 oklch(0.18 0.04 270)`,
+                    color: "oklch(0.98 0 0)",
+                  }}
+                  onClick={promptInstall}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  aria-label={t("installApp")}
+                  title={t("installAppHint")}
+                >
+                  {t("installApp")}
+                </motion.button>
+              </motion.div>
+            )}
 
             {/* Stars earned */}
             <motion.div

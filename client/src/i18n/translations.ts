@@ -191,6 +191,10 @@ export interface Translations {
   multFactLabel: string;
   multErrorRate: string;
   multAttempts: string;
+  // u2500u2500 PWA u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500u2500
+  offlineMessage: string;
+  installApp: string;
+  installAppHint: string;
 }
 
 // ── English ───────────────────────────────────────────────────
@@ -358,6 +362,9 @@ export const en: Translations = {
   multFactLabel: "Fact",
   multErrorRate: "Error Rate",
   multAttempts: "Attempts",
+  offlineMessage: "You are playing offline! All features still work.",
+  installApp: "📲 Install App",
+  installAppHint: "Play without a browser!",
 };
 
 // ── Arabic ────────────────────────────────────────────────────
@@ -525,6 +532,9 @@ export const ar: Translations = {
   multFactLabel: "الحقيقة",
   multErrorRate: "معدل الخطأ",
   multAttempts: "المحاولات",
+  offlineMessage: "أنت تلعب بدون إنترنت! جميع الميزات تعمل.",
+  installApp: "📲 تثبيت التطبيق",
+  installAppHint: "العب بدون متصفح!",
 };
 
 export const translations: Record<Language, Translations> = { en, ar };

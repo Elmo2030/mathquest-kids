@@ -24,6 +24,7 @@ import MultPracticeScreen from "./pages/MultPracticeScreen";
 import { BadgeProvider } from "./contexts/BadgeContext";
 import { MultPracticeProvider, useMultPractice } from "./contexts/MultPracticeContext";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { OfflineIndicator } from "./components/OfflineIndicator";
 
 const pageVariants = {
   initial: { opacity: 0, x: 40 },
@@ -82,6 +83,7 @@ export default function App() {
               <MultPracticeProvider>
               <BadgeProvider>
                 <Toaster />
+                <OfflineIndicator />
                 <GameRouter />
               </BadgeProvider>
               </MultPracticeProvider>
