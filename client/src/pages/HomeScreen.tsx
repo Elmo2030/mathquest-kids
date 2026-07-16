@@ -16,6 +16,7 @@ import MathGate from "@/components/MathGate";
 import LanguageToggle from "@/components/LanguageToggle";
 import LtrNum from "@/components/LtrNum";
 import BrandingFooter from "@/components/BrandingFooter";
+import CreditsModal from "@/components/CreditsModal";
 import { usePWA } from "@/hooks/usePWA";
 
 const HERO_BG =
@@ -39,6 +40,7 @@ export default function HomeScreen() {
   const { openPractice } = useMultPractice();
   const { t, isRTL } = useLanguage();
   const [showGate, setShowGate] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
   const { isInstallable, promptInstall } = usePWA();
 
   const handleParentsDashboard = () => setShowGate(true);
@@ -240,6 +242,25 @@ export default function HomeScreen() {
               </span>
               <span className="text-2xl" aria-hidden="true">⭐</span>
             </motion.div>
+
+            {/* About button */}
+            <motion.button
+              variants={itemVariants}
+              onClick={() => setShowCredits(true)}
+              className="btn-ink text-sm px-5 py-2.5 rounded-2xl"
+              style={{
+                fontFamily: displayFont,
+                background: "oklch(0.99 0.015 85 / 0.85)",
+                color: "oklch(0.18 0.04 270)",
+                border: "2.5px solid oklch(0.18 0.04 270)",
+                boxShadow: "2px 2px 0 oklch(0.18 0.04 270)",
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label={isRTL ? "من نحن" : "About"}
+            >
+              {isRTL ? "📖 من نحن" : "📖 About"}
+            </motion.button>
           </motion.div>
         </main>
 
@@ -258,6 +279,9 @@ export default function HomeScreen() {
       <AnimatePresence>
         {showGate && <MathGate onSuccess={handleGateSuccess} onDismiss={handleGateDismiss} />}
       </AnimatePresence>
+
+      {/* Credits Modal */}
+      <CreditsModal isOpen={showCredits} onClose={() => setShowCredits(false)} />
     </>
   );
 }
