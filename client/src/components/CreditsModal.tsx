@@ -9,8 +9,10 @@
  * ─────────────────────────────────────────────────────────────
  */
 
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSoundEngine } from "@/hooks/useSoundEngine";
 
 const ease = [0.23, 1, 0.32, 1] as [number, number, number, number];
 
@@ -21,6 +23,8 @@ interface CreditsModalProps {
 
 export default function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
   const { isRTL } = useLanguage();
+  const { playDedication, playStar, playClick } = useSoundEngine();
+  const [heroPulse, setHeroPulse] = useState(false);
   const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', cursive";
   const bodyFont    = isRTL ? "'Tajawal', sans-serif" : "'Nunito', sans-serif";
 
@@ -31,6 +35,20 @@ export default function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
     ? "لتعليم الرياضيات بطريقة ممتعة وتفاعلية 🎓"
     : "To make learning math fun and interactive 🎓";
   const closeBtn = isRTL ? "حسناً ✓" : "Got it ✓";
+
+  // The modal is opened by a user tap, so the browser allows this short
+  // celebratory Web Audio sequence without requiring an external audio file.
+  useEffect(() => {
+    if (!isOpen) return;
+    playDedication();
+    const starTimer = window.setTimeout(() => playStar(), 300);
+    return () => window.clearTimeout(starTimer);
+  }, [isOpen, playDedication, playStar]);
+
+  const handleHeroNameTap = () => {
+    playClick();
+    setHeroPulse(true);
+  };
 
   return (
     <AnimatePresence>
@@ -76,6 +94,7 @@ export default function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           {/* Modal card */}
           <motion.div
             className="relative z-10 flex flex-col items-center text-center px-8 py-10 rounded-3xl"
+            whileHover={{ y: -4 }}
             style={{
               background: "linear-gradient(135deg, oklch(0.22 0.05 270 / 0.95) 0%, oklch(0.20 0.06 280 / 0.95) 100%)",
               border: "3px solid oklch(0.82 0.17 85)",
@@ -123,17 +142,41 @@ export default function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
               {dedicatedTo}
             </motion.p>
 
-            {/* Hero name — large and prominent */}
+            {/* Hero name — large, tappable, and highlighted by a magic halo */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3, duration: 0.4, ease }}
-              className="px-6 py-4 rounded-2xl mb-4"
+              animate={heroPulse
+                ? { opacity: 1, scale: [1, 1.12, 1], rotate: [0, -2, 2, 0] }
+                : { opacity: 1, scale: 1, rotate: 0 }}
+              transition={{ delay: heroPulse ? 0 : 0.3, duration: heroPulse ? 0.55 : 0.4, ease }}
+              onAnimationComplete={() => heroPulse && setHeroPulse(false)}
+              onClick={handleHeroNameTap}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="relative px-6 py-4 rounded-2xl mb-4 cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") handleHeroNameTap();
+              }}
               style={{
                 background: "linear-gradient(135deg, oklch(0.82 0.17 85 / 0.15), oklch(0.65 0.2 145 / 0.15))",
                 border: "2.5px solid oklch(0.82 0.17 85 / 0.4)",
+                boxShadow: "0 0 26px oklch(0.82 0.17 85 / 0.18)",
               }}
             >
+              <motion.span
+                className="absolute -top-3 -right-3 text-xl"
+                animate={{ y: [-3, 3, -3], rotate: [0, 12, -4, 0] }}
+                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                aria-hidden="true"
+              >✨</motion.span>
+              <motion.span
+                className="absolute -bottom-3 -left-3 text-lg"
+                animate={{ y: [3, -3, 3], rotate: [0, -12, 4, 0] }}
+                transition={{ duration: 2.1, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+                aria-hidden="true"
+              >⭐</motion.span>
               <p
                 style={{
                   fontFamily: displayFont,

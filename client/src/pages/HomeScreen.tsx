@@ -41,9 +41,51 @@ export default function HomeScreen() {
   const { t, isRTL } = useLanguage();
   const [showGate, setShowGate] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied">("idle");
   const { isInstallable, promptInstall } = usePWA();
 
   const handleParentsDashboard = () => setShowGate(true);
+
+  const handleShareApp = async () => {
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: "MathQuest Kids",
+      text: isRTL
+        ? "اكتشفوا لعبة MathQuest Kids الممتعة لتعلّم الرياضيات!"
+        : "Discover MathQuest Kids — a fun way to learn math!",
+      url: shareUrl,
+    };
+
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share(shareData);
+        return;
+      }
+    } catch (error) {
+      // Closing the native share sheet is not an error and should not show a warning.
+      if (error instanceof DOMException && error.name === "AbortError") return;
+    }
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = shareUrl;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      setShareStatus("copied");
+      window.setTimeout(() => setShareStatus("idle"), 2200);
+    } catch {
+      // Keep the button usable even when a browser blocks clipboard access.
+      setShareStatus("idle");
+    }
+  };
   const handleGateSuccess = () => { setShowGate(false); navigateTo("parents"); };
   const handleGateDismiss = () => setShowGate(false);
 
@@ -242,6 +284,27 @@ export default function HomeScreen() {
               </span>
               <span className="text-2xl" aria-hidden="true">⭐</span>
             </motion.div>
+
+            {/* Share App */}
+            <motion.button
+              variants={itemVariants}
+              onClick={handleShareApp}
+              className="btn-ink text-sm px-5 py-2.5 rounded-2xl"
+              style={{
+                fontFamily: displayFont,
+                background: "oklch(0.65 0.2 145 / 0.16)",
+                color: "oklch(0.18 0.04 270)",
+                border: "2.5px solid oklch(0.18 0.04 270)",
+                boxShadow: "2px 2px 0 oklch(0.18 0.04 270)",
+              }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label={isRTL ? "مشاركة التطبيق" : "Share app"}
+            >
+              {shareStatus === "copied"
+                ? (isRTL ? "✓ تم نسخ الرابط" : "✓ Link copied")
+                : (isRTL ? "📤 مشاركة التطبيق" : "📤 Share App")}
+            </motion.button>
 
             {/* About button */}
             <motion.button

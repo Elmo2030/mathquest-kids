@@ -120,6 +120,20 @@ export function useSoundEngine() {
     });
   }, []);
 
+  /** Dedication opened — playful sparkle fanfare */
+  const playDedication = useCallback(() => {
+    const ctx = getCtx(ctxRef);
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    // A light, child-friendly "magic reveal": two quick sparkles and a warm chord.
+    [659.25, 783.99, 987.77].forEach((freq, i) => {
+      playTone(ctx, freq, t + i * 0.08, 0.18, 0.18, "triangle");
+    });
+    [523.25, 659.25, 783.99].forEach((freq) => {
+      playTone(ctx, freq, t + 0.28, 0.5, 0.13, "sine");
+    });
+  }, []);
+
   /** Subtle UI click — very short tick */
   const playClick = useCallback(() => {
     const ctx = getCtx(ctxRef);
@@ -128,5 +142,5 @@ export function useSoundEngine() {
     playTone(ctx, 1200, t, 0.04, 0.08, "sine");
   }, []);
 
-  return { playCorrect, playWrong, playStar, playFanfare, playClick };
+  return { playCorrect, playWrong, playStar, playFanfare, playDedication, playClick };
 }
