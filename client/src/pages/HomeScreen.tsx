@@ -16,7 +16,7 @@ import MathGate from "@/components/MathGate";
 import LanguageToggle from "@/components/LanguageToggle";
 import LtrNum from "@/components/LtrNum";
 import BrandingFooter from "@/components/BrandingFooter";
-import CreditsModal from "@/components/CreditsModal";
+import AboutSection from "@/components/AboutSection";
 import { usePWA } from "@/hooks/usePWA";
 
 const HERO_BG =
@@ -40,11 +40,13 @@ export default function HomeScreen() {
   const { openPractice } = useMultPractice();
   const { t, isRTL } = useLanguage();
   const [showGate, setShowGate] = useState(false);
-  const [showCredits, setShowCredits] = useState(false);
   const [shareStatus, setShareStatus] = useState<"idle" | "copied">("idle");
   const { isInstallable, promptInstall } = usePWA();
 
   const handleParentsDashboard = () => setShowGate(true);
+  const handleAboutClick = () => {
+    document.getElementById("about")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const handleShareApp = async () => {
     const shareUrl = window.location.href;
@@ -309,7 +311,7 @@ export default function HomeScreen() {
             {/* About button */}
             <motion.button
               variants={itemVariants}
-              onClick={() => setShowCredits(true)}
+              onClick={handleAboutClick}
               className="btn-ink text-sm px-5 py-2.5 rounded-2xl"
               style={{
                 fontFamily: displayFont,
@@ -335,6 +337,9 @@ export default function HomeScreen() {
         </div>
       </div>
 
+      {/* Permanent About / Story section */}
+      <AboutSection />
+
       {/* Branding Footer */}
       <BrandingFooter />
 
@@ -343,8 +348,6 @@ export default function HomeScreen() {
         {showGate && <MathGate onSuccess={handleGateSuccess} onDismiss={handleGateDismiss} />}
       </AnimatePresence>
 
-      {/* Credits Modal */}
-      <CreditsModal isOpen={showCredits} onClose={() => setShowCredits(false)} />
     </>
   );
 }
