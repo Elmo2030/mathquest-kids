@@ -53,6 +53,7 @@ export function generateAdaptiveQuestion(subLevelId: string, tier: DifficultyTie
 // ── Types ─────────────────────────────────────────────────────
 
 export type GradeLevel = "KG" | "G1" | "G2" | "G3";
+export type QuestionLanguage = "en" | "ar";
 
 export type QuestionType =
   // KG
@@ -602,6 +603,99 @@ function generateG3Fraction(): Question {
     hint: randomItem(G3_FRAC_HINTS),
     category: "Fractions",
     categoryEmoji: "🥧",
+  };
+}
+
+// ── Runtime localization ───────────────────────────────────────
+
+const ARABIC_ICON_LABELS: Record<string, string> = {
+  apple: "تفاحة",
+  star: "نجمة",
+  cat: "قطة",
+  flower: "زهرة",
+  butterfly: "فراشة",
+  lollipop: "مصاصة",
+  frog: "ضفدع",
+  balloon: "بالون",
+  donut: "دونات",
+  chick: "كتكوت",
+  rainbow: "قوس قزح",
+  strawberry: "فراولة",
+};
+
+const LOCALIZED_CATEGORIES: Record<string, { en: string; ar: string }> = {
+  "KG-counting": { en: "Counting", ar: "العد" },
+  "KG-numbers": { en: "Numbers", ar: "الأرقام" },
+  "G1-addition": { en: "Addition", ar: "الجمع" },
+  "G1-subtraction": { en: "Subtraction", ar: "الطرح" },
+  "G2-addition": { en: "Big Addition", ar: "الجمع الكبير" },
+  "G2-subtraction": { en: "Big Subtraction", ar: "الطرح الكبير" },
+  "G2-multiplication": { en: "Times Tables", ar: "جداول الضرب" },
+  "G3-multiplication": { en: "Times Tables", ar: "جداول الضرب" },
+  "G3-division": { en: "Division", ar: "القسمة" },
+  "G3-fractions": { en: "Fractions", ar: "الكسور" },
+};
+
+const ARABIC_HINTS: Record<QuestionType, string[]> = {
+  counting: ["عدّ كل واحدة بعناية! 🦉", "أشر وعدّ بصوت عالٍ! 👆", "كم واحدة تراها؟ 👀", "عدّها واحدة واحدة! 🐾", "خذ وقتك، أنت تستطيع! 💪"],
+  number_id: ["انظر إلى الرقم جيداً! 🦉", "أي رقم تراه؟ 👀", "اختر الرقم المطابق! 🔢", "فكّر بهدوء، أنت تستطيع! 💪", "أحسنت المحاولة! 🌟"],
+  addition_easy: ["اجمع العددين معاً! 🦉", "ابدأ من العدد الأكبر! 🔢", "استخدم أصابعك إذا احتجت! 🖐️", "أنت تستطيع! فكّر جيداً! 🧠", "كم يصبح المجموع؟ ➕"],
+  subtraction_easy: ["اطرح العدد الأصغر! 🦉", "عدّ إلى الخلف! ⬅️", "كم عدد الباقي؟ 🤔", "اطرح بعناية! ✂️", "أنت تستطيع! فكّر فيها! 💡"],
+  addition_hard: ["رتّب الأعداد واجمعها! 🦉", "قسّمها إلى عشرات وآحاد! 🔟", "عدّ إلى الأمام بعناية! 📈", "أنت تعرف هذه المسألة! 💪", "فكّر في العشرات أولاً! 💡"],
+  subtraction_hard: ["اطرح خطوة بخطوة! 🦉", "عدّ إلى الأسفل من العدد الأكبر! ⬇️", "قسّمها إلى عشرات وآحاد! 🔟", "اقتربت، فكّر فيها! 🤔", "أنت تستطيع! 💪"],
+  multiplication_basic: ["الضرب هو جمع سريع! 🦉", "عدّ في مجموعات! 👥", "فكّر في جدول الضرب! 📋", "اضرب بعناية! ✖️", "أنت تستطيع! 🌟"],
+  multiplication_full: ["تذكّر جداول الضرب! 🦉", "فكّر في المجموعات! 👥", "لقد تدربت على هذا! 📋", "اضرب خطوة بخطوة! ✖️", "أنت بطل جداول الضرب! 🏆"],
+  division: ["القسمة هي المشاركة بالتساوي! 🦉", "كم مجموعة يمكنك تكوينها؟ 👥", "فكّر في جدول الضرب المناسب! 📋", "وزّعها بعناية! ➗", "أنت تستطيع! 💪"],
+  fraction: ["انظر إلى الأجزاء المظللة! 🦉", "عدّ الشرائح كلها أولاً! 🥧", "الجزء المظلل هو الإجابة! 🎨", "ما مقدار الجزء الملون؟ 🍕", "العدد العلوي للمظلل والسفلي للكل! 📐"],
+};
+
+function stableHintIndex(questionId: string, count: number): number {
+  return questionId.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % count;
+}
+
+export function getLocalizedSubLevelLabel(subLevelId: string, language: QuestionLanguage): string {
+  const sub = SUB_LEVELS.find((item) => item.id === subLevelId);
+  if (!sub) return subLevelId;
+  const labels: Record<string, { en: string; ar: string }> = {
+    "KG-counting": { en: "Counting", ar: "العد" },
+    "KG-numbers": { en: "Numbers", ar: "الأرقام" },
+    "G1-addition": { en: "Addition", ar: "الجمع" },
+    "G1-subtraction": { en: "Subtraction", ar: "الطرح" },
+    "G2-addition": { en: "Big Addition", ar: "الجمع الكبير" },
+    "G2-subtraction": { en: "Big Subtraction", ar: "الطرح الكبير" },
+    "G2-multiplication": { en: "First Times", ar: "الضرب الأول" },
+    "G3-multiplication": { en: "Times Tables", ar: "جداول الضرب" },
+    "G3-division": { en: "Division", ar: "القسمة" },
+    "G3-fractions": { en: "Fractions", ar: "الكسور" },
+  };
+  const label = labels[subLevelId];
+  return label ? label[language] : sub.label;
+}
+
+export function getLocalizedQuestion(question: Question, language: QuestionLanguage): Question {
+  if (language === "en") return question;
+
+  const a = question.operandA;
+  const b = question.operandB;
+  const iconLabel = question.countingIcon ? (ARABIC_ICON_LABELS[question.countingIcon.label] ?? question.countingIcon.label) : "";
+  let text = question.text;
+
+  if (question.type === "counting" && iconLabel) text = `كم ${iconLabel} ترى؟`;
+  else if (question.type === "number_id") text = "ما هذا الرقم؟";
+  else if (question.type === "fraction") text = "ما الكسر المظلل في الشكل؟";
+  else if (a !== undefined && b !== undefined) {
+    const op = question.type.includes("addition") ? "+" : question.type.includes("subtraction") ? "−" : question.type.includes("multiplication") ? "×" : "÷";
+    text = `ما ناتج ${a} ${op} ${b}؟`;
+  }
+
+  return {
+    ...question,
+    text,
+    hint: ARABIC_HINTS[question.type]?.[stableHintIndex(question.id, ARABIC_HINTS[question.type].length)] ?? question.hint,
+    category: LOCALIZED_CATEGORIES[question.subLevelId]?.ar ?? question.category,
+    countingIcon: question.countingIcon
+      ? { ...question.countingIcon, label: iconLabel }
+      : question.countingIcon,
   };
 }
 

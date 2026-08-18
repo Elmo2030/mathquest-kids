@@ -61,7 +61,7 @@ export default function MultipleChoiceFormat({ choices, selectedId, feedbackStat
               cursor: feedbackState === "idle" ? "pointer" : "default",
               direction: "ltr",
             }}
-            aria-label={`Answer: ${choice.label}`}
+              aria-label={`${isRTL ? "الإجابة" : "Answer"}: ${choice.label}`}
           >
             <LtrNum>{choice.label}</LtrNum>
             {showCorrect && <span className="absolute top-1 end-2 text-lg" aria-hidden="true">✅</span>}

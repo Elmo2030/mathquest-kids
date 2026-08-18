@@ -21,7 +21,7 @@ import FillTheGapFormat from "@/components/game-formats/FillTheGapFormat";
 import BubblePopFormat from "@/components/game-formats/BubblePopFormat";
 import type { MoodType } from "@/components/MascotOwl";
 import type { AnswerChoice, Question } from "@/lib/mathEngine";
-import { PASS_THRESHOLD } from "@/lib/mathEngine";
+import { getLocalizedQuestion, getLocalizedSubLevelLabel, PASS_THRESHOLD } from "@/lib/mathEngine";
 
 /** Randomly pick a game format for this question — seeded by question id for stability */
 type GameFormat = "multiple_choice" | "fill_gap" | "bubble_pop";
@@ -315,7 +315,7 @@ export default function GameScreen() {
     streak, difficultyTier, fastAnswerCount, analytics, levels, isGradeMastered, allLevelsComplete,
   } = useGame();
   const { checkUnlocks } = useBadges();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   const { playCorrect, playWrong, playClick } = useSoundEngine();
   void playClick; // used by child components
@@ -338,6 +338,7 @@ export default function GameScreen() {
 
   // Pick a stable format for this question
   const gameFormat: GameFormat = currentQuestion ? pickFormat(currentQuestion.id) : "multiple_choice";
+  const localizedQuestion = currentQuestion ? getLocalizedQuestion(currentQuestion, language) : null;
 
   // Feedback messages (language-aware)
   const CORRECT_MESSAGES = [
@@ -483,7 +484,7 @@ export default function GameScreen() {
           return (
             <div className="flex items-center gap-2">
               <span style={{ fontFamily: displayFont, fontSize: "0.78rem", color: "oklch(0.35 0.04 270)", whiteSpace: "nowrap" }}>
-                {sp.emoji} {sp.label}
+                {sp.emoji} {getLocalizedSubLevelLabel(sp.subLevelId, language)}
               </span>
               <div className="progress-track flex-1" style={{ height: "0.7rem" }}>
                 <motion.div
@@ -545,7 +546,7 @@ export default function GameScreen() {
                 animate={{ opacity: 1 }}
                 style={{ fontFamily: bodyFont, fontWeight: 700, fontSize: "0.9rem", color: "oklch(0.45 0.04 270)", textAlign: "center" }}
               >
-                {isRTL ? `أولي يقول: "${currentQuestion.hint}"` : `Ollie says: "${currentQuestion.hint}"`}
+                {isRTL ? `أولي يقول: "${localizedQuestion?.hint ?? currentQuestion.hint}"` : `Ollie says: "${localizedQuestion?.hint ?? currentQuestion.hint}"`}
               </motion.p>
             )}
           </AnimatePresence>
@@ -566,7 +567,7 @@ export default function GameScreen() {
               <span className="px-4 py-1 rounded-full text-sm"
                 style={{ background: "oklch(0.82 0.17 85)", border: "2px solid oklch(0.18 0.04 270)", fontFamily: displayFont, color: "oklch(0.18 0.04 270)" }}
               >
-                {currentQuestion.categoryEmoji} {currentQuestion.category}
+                {localizedQuestion?.categoryEmoji} {localizedQuestion?.category}
               </span>
             </div>
 
@@ -576,7 +577,7 @@ export default function GameScreen() {
               dir="ltr"
               style={{ fontFamily: "'Fredoka One', sans-serif", color: "oklch(0.18 0.04 270)" }}
             >
-              {currentQuestion.text}
+              {localizedQuestion?.text ?? currentQuestion.text}
             </h2>
 
             {/* Visual aid */}

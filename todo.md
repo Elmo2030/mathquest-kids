@@ -22,3 +22,14 @@
 - [x] Phase 2: Build the About section.
 - [x] Phase 3: Wire navigation and remove modal-only behavior.
 - [x] Phase 4: Verify and deliver.
+
+## Language Consistency Fix
+
+- [x] Thread the selected language through runtime math-question localization.
+- [x] Localize question prompts, hints, categories, operation labels, and sub-level descriptions.
+- [x] Ensure existing rounds refresh their display text when the language changes.
+- [x] Localize level-select, locked-level, endless-mode, and multiplication-practice copy.
+- [x] Localize accessibility labels and child-facing feedback in all game formats.
+- [x] Preserve Western numerals and LTR equation rendering in Arabic mode.
+- [x] Run TypeScript, production build, and visual checks.
+- [ ] Save a checkpoint and deliver the language-consistency fix.

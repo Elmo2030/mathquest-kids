@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LtrNum from "@/components/LtrNum";
 import LanguageToggle from "@/components/LanguageToggle";
 import BrandingFooter from "@/components/BrandingFooter";
+import { getLocalizedQuestion, getLocalizedSubLevelLabel } from "@/lib/mathEngine";
 import { toast } from "sonner";
 
 const LOGO_STAR =
@@ -285,7 +286,7 @@ function MultWeakPointsWidget({ isRTL, displayFont, bodyFont }: { isRTL: boolean
 
 export default function ParentsScreen() {
   const { goHome, levels, subLevelProgress, answerHistory, analytics, totalStarsEarned, resetProgress } = useGame();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const [showResetDialog, setShowResetDialog] = useState(false);
 
   const displayFont = isRTL ? "'Tajawal', sans-serif" : "'Fredoka One', sans-serif";
@@ -418,7 +419,7 @@ export default function ParentsScreen() {
                           <span className="text-2xl shrink-0 mt-0.5" aria-hidden="true">{sp.emoji}</span>
                           <div>
                             <p style={{ fontFamily: displayFont, fontSize: "1rem", color: "oklch(0.18 0.04 270)" }}>
-                              {sp.label}
+                               {getLocalizedSubLevelLabel(sp.subLevelId, language)}
                               <span className="ms-2 text-sm" style={{ color: "oklch(0.62 0.22 25)" }}>
                                 (<LtrNum>{acc}%</LtrNum>)
                               </span>
@@ -457,9 +458,9 @@ export default function ParentsScreen() {
                         {subs.map((sp, si) => {
                           const acc = sp.totalAttempts > 0 ? Math.round((sp.totalCorrect / sp.totalAttempts) * 100) : 0;
                           return (
-                            <AccuracyRow
-                              key={sp.subLevelId}
-                              emoji={sp.emoji} label={sp.label}
+                               <AccuracyRow
+                               key={sp.subLevelId}
+                              emoji={sp.emoji} label={getLocalizedSubLevelLabel(sp.subLevelId, language)}
                               pct={acc} correct={sp.totalCorrect} total={sp.totalAttempts}
                               passed={sp.passed} isWorst={worstIds.has(sp.subLevelId)}
                               delay={0.05 + gi * 0.06 + si * 0.04}
@@ -556,12 +557,12 @@ export default function ParentsScreen() {
                           {GRADE_LABELS[entry.grade]?.split(" ")[0] ?? ""}
                         </span>
                         {/* Question text always LTR (math expression) */}
-                        <span dir="ltr" className="math-equation"
+                        <span dir={entry.questionSnapshot ? (isRTL ? "rtl" : "ltr") : "ltr"} className="math-equation"
                           style={{ fontFamily: "'Nunito', sans-serif", fontWeight: 700, fontSize: "0.82rem", color: "oklch(0.28 0.04 270)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {entry.questionText}
+                          {entry.questionSnapshot ? getLocalizedQuestion(entry.questionSnapshot, language).text : entry.questionText}
                         </span>
                         <span style={{ fontFamily: bodyFont, fontWeight: 700, fontSize: "0.72rem", color: "oklch(0.52 0.04 270)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {entry.subLevelLabel}
+                          {getLocalizedSubLevelLabel(entry.subLevelId, language)}
                         </span>
                         <span className="text-center rounded-lg px-1 py-0.5 text-xs"
                           style={{ background: entry.correct ? "oklch(0.92 0.06 145)" : "oklch(0.95 0.04 25)", color: entry.correct ? "oklch(0.35 0.15 145)" : "oklch(0.45 0.18 25)", fontFamily: displayFont, border: `1.5px solid ${entry.correct ? "oklch(0.65 0.2 145)" : "oklch(0.62 0.22 25)"}` }}>

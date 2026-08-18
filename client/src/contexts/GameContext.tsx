@@ -139,6 +139,7 @@ export interface AnswerHistoryEntry {
   questionType: string;
   correct: boolean;
   questionText: string;
+  questionSnapshot?: Question;
 }
 
 /** Persistent analytics state */
@@ -178,6 +179,7 @@ export interface RoundResult {
   subLevelId: string;
   questionType: string;
   questionText: string;
+  questionSnapshot?: Question;
 }
 
 export interface RoundState {
@@ -240,6 +242,7 @@ function roundReducer(state: RoundState, action: RoundAction): RoundState {
         subLevelId: question.subLevelId,
         questionType: question.type,
         questionText: question.text,
+        questionSnapshot: question,
       };
 
       const newScore = correct ? state.score + 1 : state.score;
@@ -612,6 +615,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           questionType: r.questionType,
           correct: r.correct,
           questionText: r.questionText,
+          questionSnapshot: r.questionSnapshot,
         };
       });
       setAnswerHistory((prev) => [...prev, ...newEntries]);

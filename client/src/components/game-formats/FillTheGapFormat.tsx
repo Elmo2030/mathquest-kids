@@ -181,7 +181,7 @@ export default function FillTheGapFormat({ question, choices, selectedId, feedba
                 direction: "ltr",
                 minWidth: "4.5rem",
               }}
-              aria-label={`Answer: ${choice.label}`}
+              aria-label={`${isRTL ? "الإجابة" : "Answer"}: ${choice.label}`}
             >
               <LtrNum>{choice.label}</LtrNum>
             </motion.button>

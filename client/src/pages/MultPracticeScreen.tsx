@@ -362,7 +362,7 @@ export default function MultPracticeScreen() {
                     color: isCorrect ? "oklch(0.78 0.18 145)" : "oklch(0.78 0.18 25)",
                   }}
                 >
-                  {isCorrect ? correctMsg : (encourageMsg ?? "Try again!")}
+                  {isCorrect ? correctMsg : (encourageMsg ?? (isAr ? "حاول مرة أخرى! 💪" : "Try again! 💪"))}
                 </motion.div>
               )}
             </AnimatePresence>

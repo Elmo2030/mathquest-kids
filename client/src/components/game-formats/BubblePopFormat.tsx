@@ -41,7 +41,7 @@ function randomBetween(min: number, max: number) {
   return min + Math.random() * (max - min);
 }
 
-export default function BubblePopFormat({ choices, selectedId, feedbackState, onSelect, displayFont }: Props) {
+export default function BubblePopFormat({ choices, selectedId, feedbackState, onSelect, displayFont, isRTL }: Props) {
   const arenaRef = useRef<HTMLDivElement>(null);
   const [bubbles, setBubbles] = useState<BubbleState[]>([]);
   const animRef = useRef<number | null>(null);
@@ -179,7 +179,7 @@ export default function BubblePopFormat({ choices, selectedId, feedbackState, on
                 exit={showCorrect ? { scale: 0, opacity: 0 } : {}}
                 transition={{ duration: 0.4 }}
                 whileHover={feedbackState === "idle" ? { scale: 1.1 } : {}}
-                aria-label={`Bubble: ${choice.label}`}
+                aria-label={`${isRTL ? "فقاعة" : "Bubble"}: ${choice.label}`}
               >
                 <LtrNum>{choice.label}</LtrNum>
                 {/* Shine highlight */}

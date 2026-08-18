@@ -14,7 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useGame } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSoundEngine } from "@/hooks/useSoundEngine";
-import { generateEndlessRound, validateAnswer, getCorrectChoice } from "@/lib/mathEngine";
+import { generateEndlessRound, getLocalizedQuestion, validateAnswer, getCorrectChoice } from "@/lib/mathEngine";
 import type { Question } from "@/lib/mathEngine";
 import LtrNum from "@/components/LtrNum";
 import BrandingFooter from "@/components/BrandingFooter";
@@ -55,6 +55,7 @@ export default function EndlessScreen() {
   const autoAdvanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentQuestion = questions[qIndex] ?? null;
+  const localizedQuestion = currentQuestion ? getLocalizedQuestion(currentQuestion, language) : null;
 
   // Regenerate batch when we reach the end
   useEffect(() => {
@@ -310,7 +311,7 @@ export default function EndlessScreen() {
                 className="px-3 py-1 rounded-full text-xs font-bold"
                 style={{ fontFamily: bodyFont, background: "oklch(0.58 0.19 250 / 0.25)", color: "oklch(0.75 0.12 250)", border: "1px solid oklch(0.58 0.19 250 / 0.4)" }}
               >
-                {currentQuestion.categoryEmoji} {currentQuestion.category}
+                {localizedQuestion?.categoryEmoji} {localizedQuestion?.category}
               </span>
               <span style={{ fontFamily: bodyFont, fontSize: "0.8rem", color: "oklch(0.55 0.04 270)" }}>
                 #{<LtrNum>{String(totalAnswered + 1)}</LtrNum>}
@@ -347,7 +348,7 @@ export default function EndlessScreen() {
                   dir="ltr"
                   style={{ fontFamily: displayFont, fontSize: "clamp(1.8rem, 6vw, 2.5rem)", color: "oklch(0.95 0.02 270)", letterSpacing: "0.05em" }}
                 >
-                  {currentQuestion.text}
+                  {localizedQuestion?.text ?? currentQuestion.text}
                 </span>
               </div>
             )}
@@ -372,7 +373,7 @@ export default function EndlessScreen() {
                   {feedback === "correct" ? t.correct : t.wrong}
                   {feedback === "wrong" && (
                     <span style={{ display: "block", fontFamily: bodyFont, fontSize: "0.85rem", marginTop: "0.2rem" }}>
-                      {isAr ? "الإجابة الصحيحة: " : "Answer: "}
+                      {isAr ? "الإجابة الصحيحة: " : "Correct answer: "}
                       <span dir="ltr" style={{ fontWeight: 700 }}>{correctChoice.label}</span>
                     </span>
                   )}

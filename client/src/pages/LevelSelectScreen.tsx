@@ -9,7 +9,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGame, type LevelInfo, type GradeZone } from "@/contexts/GameContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { PASS_THRESHOLD } from "@/lib/mathEngine";
+import { getLocalizedSubLevelLabel, PASS_THRESHOLD } from "@/lib/mathEngine";
 import FloatingDecorations from "@/components/FloatingDecorations";
 import MascotOwl from "@/components/MascotOwl";
 import LanguageToggle from "@/components/LanguageToggle";
@@ -240,7 +240,7 @@ function LevelCard({
   onToggle: () => void;
 }) {
   const { selectLevel, getSubLevelProgressForGrade, isGradeMastered } = useGame();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
 
   const subLevels = getSubLevelProgressForGrade(level.id);
   const passedCount = subLevels.filter((s) => s.passed).length;
@@ -417,7 +417,7 @@ function LevelCard({
                 onClick={() => selectLevel(level.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                aria-label={`Play all ${label} operations`}
+                aria-label={isRTL ? `العب كل عمليات ${label}` : `Play all ${label} operations`}
               >
                 {level.emoji} {t("startLevel")} {label}
               </motion.button>
@@ -452,7 +452,7 @@ function LevelCard({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2 mb-1.5">
                           <span style={{ fontFamily: displayFont, fontSize: "0.95rem", color: "oklch(0.18 0.04 270)" }}>
-                            {sp.label}
+                            {getLocalizedSubLevelLabel(sp.subLevelId, language)}
                           </span>
                           {sp.passed ? (
                             <span className="text-sm" aria-hidden="true">✅ {t("passed")}</span>
@@ -560,7 +560,7 @@ export default function LevelSelectScreen() {
           style={{ fontFamily: displayFont }}
           aria-label={t("backHome")}
         >
-          {isRTL ? "الرئيسية →" : "← Back"}
+              {isRTL ? "الرئيسية →" : t("backHome")}
         </button>
 
         <div className="flex items-center gap-2">
